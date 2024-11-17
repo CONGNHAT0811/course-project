@@ -28,7 +28,6 @@ def read_csv_to_dataframe(file_paths):
             print(f"Không tìm thấy tệp: {file_path}")
         except Exception as e:
             print(f"Đã xảy ra lỗi khi đọc tệp {file_path}: {e}")
-    
     return data_df
 
 # File paths to CSVs
@@ -59,30 +58,76 @@ data_vaccinations = data.get('vaccinations', pd.DataFrame())
 data_vaccinations_age_sex = data.get('vaccinations-by-age-group', pd.DataFrame())
 
 
+continents = {
+    "africa": ["Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cameroon", "Cape Verde", 
+               "Central African Republic", "Chad", "Comoros", "Congo", "Djibouti", "Egypt", "Equatorial Guinea", 
+               "Eritrea", "Eswatini", "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Kenya", 
+               "Lesotho", "Liberia", "Libya", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", 
+               "Morocco", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", "Sao Tome and Principe", 
+               "Senegal", "Seychelles", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sudan", 
+               "Tanzania", "Togo", "Tunisia", "Uganda", "Zambia", "Zimbabwe"],
+    "asia": ["Afghanistan", "Armenia", "Azerbaijan", "Bahrain", "Bangladesh", "Bhutan", "Brunei", "Cambodia", 
+             "China", "Cyprus", "Georgia", "India", "Indonesia", "Iran", "Iraq", "Israel", "Japan", "Jordan", 
+             "Kazakhstan", "Kuwait", "Kyrgyzstan", "Laos", "Lebanon", "Malaysia", "Maldives", "Mongolia", "Myanmar", 
+             "Nepal", "North Korea", "Oman", "Pakistan", "Palestine", "Philippines", "Qatar", "Saudi Arabia", 
+             "Singapore", "South Korea", "Sri Lanka", "Syria", "Tajikistan", "Thailand", "Timor-Leste", "Turkey", 
+             "Turkmenistan", "United Arab Emirates", "Uzbekistan", "Vietnam", "Yemen"],
+    "europe": ["Albania", "Andorra", "Austria", "Belarus", "Belgium", "Bosnia and Herzegovina", "Bulgaria", 
+               "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", 
+               "Hungary", "Iceland", "Ireland", "Italy", "Kosovo", "Latvia", "Liechtenstein", "Lithuania", 
+               "Luxembourg", "Malta", "Moldova", "Monaco", "Montenegro", "Netherlands", "North Macedonia", 
+               "Norway", "Poland", "Portugal", "Romania", "Russia", "San Marino", "Serbia", "Slovakia", 
+               "Slovenia", "Spain", "Sweden", "Switzerland", "Ukraine", "United Kingdom", "Vatican"],
+    "north america": ["Antigua and Barbuda", "Bahamas", "Barbados", "Belize", "Canada", "Costa Rica", "Cuba", 
+                      "Dominica", "Dominican Republic", "El Salvador", "Grenada", "Guatemala", "Haiti", "Honduras", 
+                      "Jamaica", "Mexico", "Nicaragua", "Panama", "Saint Kitts and Nevis", "Saint Lucia", 
+                      "Saint Vincent and the Grenadines", "Trinidad and Tobago", "United States"],
+    "south america": ["Argentina", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador", "Guyana", "Paraguay", 
+                      "Peru", "Suriname", "Uruguay", "Venezuela"],
+    "oceania": ["Australia", "Fiji", "Kiribati", "Marshall Islands", "Micronesia (country)", "Nauru", "New Zealand", 
+                "Palau", "Papua New Guinea", "Samoa", "Solomon Islands", "Tonga", "Tuvalu", "Vanuatu"]
+            }
 
-#Hàm trả về Case của quốc gia 
 @app.route("/get_case", methods=["GET"])
 def get_case():
-    location = request.args.get("location", "").lower() 
+    location = request.args.get('location', "").lower()
     result = []
 
-    # Đảm bảo cột 'date' là kiểu datetime
-    data_case["date"] = pd.to_datetime(data_case["date"], errors='coerce')
+    # Ensure 'date' column is datetime
+    data_case['date'] = pd.to_datetime(data_case['date'], errors='coerce')
 
-    # Kiểm tra xem quốc gia có trong cột DataFrame không
-    if location in data_case.columns:
-        # Lặp qua các dòng của DataFrame để lấy dữ liệu theo từng ngày
+    if location == "world":
+        for _, row in data_case.iterrows():
+            if pd.notna(row['date']):
+                daily_data = {
+                    "date": row['date'].strftime("%Y-%m-%d"),
+                    "countries": {country: row[country] if pd.notna(row[country]) else 0 for country in data_case.columns[1:]}
+                }
+                result.append(daily_data)
+    elif location in continents:
+        countries_in_continent = continents[location]
         for index, row in data_case.iterrows():
-            if pd.notna(row["date"]):  # Kiểm tra giá trị date hợp lệ
+            if pd.notna(row["date"]):
+                daily_data = {
+                    "date": row["date"].strftime("%Y-%m-%d"),
+                    "countries": {}
+                }
+                for country in countries_in_continent:  # Thay thế bằng danh sách các quốc gia cần lấy dữ liệu
+                    if country in data_case.columns:
+                        daily_data["countries"][country] = row[country] if pd.notna(row[country]) else 0
+                result.append(daily_data)
+    elif location in data_case.columns:
+        for _, row in data_case.iterrows():
+            if pd.notna(row['date']):
                 result.append({
-                    "date": row["date"].strftime("%Y-%m-%d"),  # Định dạng ngày tháng
-                    "new_cases": row[location]  # Số ca mới của quốc gia đó
+                    "date": row['date'].strftime("%Y-%m-%d"),
+                    "new_cases": row[location]
                 })
     else:
-        # Nếu không tìm thấy quốc gia trong cột, trả về thông báo lỗi
         return jsonify({"message": f"Location '{location}' not found"}), 404
-    
+
     return jsonify(result)
+
 
 @app.route("/get_sum_case", methods=["GET"])
 def get_sum_case():
@@ -367,6 +412,16 @@ def get_deaths():
     # Đảm bảo cột 'date' là kiểu datetime
     data_deaths["date"] = pd.to_datetime(data_deaths["date"], errors='coerce')
 
+    if location == "world":
+            for index, row in data_deaths.iterrows():
+                if pd.notna(row["date"]):  # Kiểm tra giá trị date hợp lệ
+                    daily_data = {
+                        "date": row["date"].strftime("%Y-%m-%d"),
+                        "countries": {}
+                    }
+                    for country in data_deaths.columns[1:]:  # Bỏ qua cột 'date'
+                        daily_data["countries"][country] = row[country] if pd.notna(row[country]) else 0
+                    result.append(daily_data)
     # Kiểm tra xem quốc gia có trong cột DataFrame không
     if location in data_deaths.columns:
         # Lặp qua các dòng của DataFrame để lấy dữ liệu theo từng ngày
