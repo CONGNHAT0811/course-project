@@ -1,10 +1,8 @@
 from flask import Flask, request, jsonify
 import pandas as pd
 from owid import catalog
-import pandas as pd
 
 app = Flask(__name__)
-
 
 def read_csv_to_dataframe(file_paths):
     """
@@ -66,36 +64,15 @@ continents = {
                "Morocco", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", "Sao Tome and Principe", 
                "Senegal", "Seychelles", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sudan", 
                "Tanzania", "Togo", "Tunisia", "Uganda", "Zambia", "Zimbabwe"],
-    "asia": ["Afghanistan", "Armenia", "Azerbaijan", "Bahrain", "Bangladesh", "Bhutan", "Brunei", "Cambodia", 
-             "China", "Cyprus", "Georgia", "India", "Indonesia", "Iran", "Iraq", "Israel", "Japan", "Jordan", 
-             "Kazakhstan", "Kuwait", "Kyrgyzstan", "Laos", "Lebanon", "Malaysia", "Maldives", "Mongolia", "Myanmar", 
-             "Nepal", "North Korea", "Oman", "Pakistan", "Palestine", "Philippines", "Qatar", "Saudi Arabia", 
-             "Singapore", "South Korea", "Sri Lanka", "Syria", "Tajikistan", "Thailand", "Timor-Leste", "Turkey", 
-             "Turkmenistan", "United Arab Emirates", "Uzbekistan", "Vietnam", "Yemen"],
-    "europe": ["Albania", "Andorra", "Austria", "Belarus", "Belgium", "Bosnia and Herzegovina", "Bulgaria", 
-               "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", 
-               "Hungary", "Iceland", "Ireland", "Italy", "Kosovo", "Latvia", "Liechtenstein", "Lithuania", 
-               "Luxembourg", "Malta", "Moldova", "Monaco", "Montenegro", "Netherlands", "North Macedonia", 
-               "Norway", "Poland", "Portugal", "Romania", "Russia", "San Marino", "Serbia", "Slovakia", 
-               "Slovenia", "Spain", "Sweden", "Switzerland", "Ukraine", "United Kingdom", "Vatican"],
-    "north america": ["Antigua and Barbuda", "Bahamas", "Barbados", "Belize", "Canada", "Costa Rica", "Cuba", 
-                      "Dominica", "Dominican Republic", "El Salvador", "Grenada", "Guatemala", "Haiti", "Honduras", 
-                      "Jamaica", "Mexico", "Nicaragua", "Panama", "Saint Kitts and Nevis", "Saint Lucia", 
-                      "Saint Vincent and the Grenadines", "Trinidad and Tobago", "United States"],
-    "south america": ["Argentina", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador", "Guyana", "Paraguay", 
-                      "Peru", "Suriname", "Uruguay", "Venezuela"],
-    "oceania": ["Australia", "Fiji", "Kiribati", "Marshall Islands", "Micronesia (country)", "Nauru", "New Zealand", 
-                "Palau", "Papua New Guinea", "Samoa", "Solomon Islands", "Tonga", "Tuvalu", "Vanuatu"]
-            }
+    }
 
+#  Hàm trả về dữ liệu trong ngày Case
 @app.route("/get_case", methods=["GET"])
 def get_case():
     location = request.args.get('location', "").lower()
     result = []
-
-    # Ensure 'date' column is datetime
+    local_continents = {k: [c.lower().strip() for c in v] for k, v in continents.items()}
     data_case['date'] = pd.to_datetime(data_case['date'], errors='coerce')
-
     if location == "world":
         for _, row in data_case.iterrows():
             if pd.notna(row['date']):
@@ -104,18 +81,21 @@ def get_case():
                     "countries": {country: row[country] if pd.notna(row[country]) else 0 for country in data_case.columns[1:]}
                 }
                 result.append(daily_data)
-    elif location in continents:
-        countries_in_continent = continents[location]
-        for index, row in data_case.iterrows():
+    elif location in local_continents:
+        countries_in_continent = local_continents[location]
+        available_countries = [c for c in countries_in_continent if c in data_case.columns]
+        if not available_countries:
+            return jsonify({"message": f"No data found for the continent '{location}'."}), 404
+        for _, row in data_case.iterrows():
             if pd.notna(row["date"]):
                 daily_data = {
-                    "date": row["date"].strftime("%Y-%m-%d"),
+                    "date": row['date'].strftime("%Y-%m-%d"),
                     "countries": {}
                 }
-                for country in countries_in_continent:  # Thay thế bằng danh sách các quốc gia cần lấy dữ liệu
-                    if country in data_case.columns:
-                        daily_data["countries"][country] = row[country] if pd.notna(row[country]) else 0
-                result.append(daily_data)
+                for country in available_countries:
+                    daily_data["countries"][country] = row[country] if pd.notna(row[country]) else 0
+                if daily_data["countries"]:
+                    result.append(daily_data)
     elif location in data_case.columns:
         for _, row in data_case.iterrows():
             if pd.notna(row['date']):
@@ -125,68 +105,125 @@ def get_case():
                 })
     else:
         return jsonify({"message": f"Location '{location}' not found"}), 404
-
+    if not result:
+        return jsonify({"message": f"No data found for location '{location}'."}), 404
     return jsonify(result)
-
-
 @app.route("/get_sum_case", methods=["GET"])
 def get_sum_case():
     location = request.args.get("location", "").lower() 
     result = []
-
-    # Đảm bảo cột 'date' là kiểu datetime
     data_case["date"] = pd.to_datetime(data_case["date"], errors='coerce')
-
-    # Kiểm tra xem quốc gia có trong cột DataFrame không
-    if location in data_case.columns:
-        # Tạo cột tháng-năm để nhóm theo tháng và năm
+    local_continents = {k: [c.lower().strip() for c in v] for k, v in continents.items()}
+    if location == "world":
         data_case["month_year"] = data_case["date"].dt.to_period("M")
+        monthly_data = data_case.groupby("month_year").sum(numeric_only=True).reset_index()
+        for _, row in monthly_data.iterrows():
+            result.append({
+                "month_year": str(row["month_year"]),  # Định dạng tháng-năm
+                "total_new_cases": row.sum()  # Tổng tất cả các quốc gia trong tháng
+            })
 
-        # Nhóm dữ liệu theo tháng-năm và tính tổng số ca mới cho mỗi tháng
+    elif location in local_continents:
+        countries_in_continent = local_continents[location]
+        available_countries = [c for c in countries_in_continent if c in data_case.columns]
+
+        if not available_countries:
+            return jsonify({"message": f"No data found for continent '{location}'."}), 404
+        data_case["month_year"] = data_case["date"].dt.to_period("M")
+        monthly_data = data_case.groupby("month_year")[available_countries].sum().reset_index()
+        for _, row in monthly_data.iterrows():
+            month_data = {
+                "month_year": str(row["month_year"]),  # Định dạng tháng-năm
+                "countries": []  # Mảng chứa thông tin các quốc gia trong tháng đó
+            }
+            for country in available_countries:
+                month_data["countries"].append({
+                    "country": country,  # Tên quốc gia
+                    "total_new_cases": row[country]  # Tổng số ca của quốc gia trong tháng
+                })
+            result.append(month_data)
+    elif location in data_case.columns:
+        data_case["month_year"] = data_case["date"].dt.to_period("M")
         monthly_data = data_case.groupby("month_year")[location].sum().reset_index()
-
-        # Lặp qua từng dòng trong kết quả nhóm
-        for index, row in monthly_data.iterrows():
+        for _, row in monthly_data.iterrows():
             result.append({
                 "month_year": str(row["month_year"]),  # Định dạng tháng-năm
                 "total_new_cases": row[location]  # Tổng số ca mới trong tháng
             })
     else:
-        # Nếu không tìm thấy quốc gia trong cột, trả về thông báo lỗi
         return jsonify({"message": f"Location '{location}' not found"}), 404
-    
+    if not result:
+        return jsonify({"message": f"No data found for location '{location}'."}), 404
     return jsonify(result)
-
-    
-@app.route("/get_yearly_cases", methods=["GET"])
-def get_yearly_cases():
-    location = request.args.get("location", "").lower() 
+@app.route("/get_yearly_case", methods=["GET"])
+def get_yearly_case():
+    location = request.args.get("location", "").lower()
     result = []
 
     # Đảm bảo cột 'date' là kiểu datetime
     data_case["date"] = pd.to_datetime(data_case["date"], errors='coerce')
 
-    # Kiểm tra xem quốc gia có trong cột DataFrame không
-    if location in data_case.columns:
+    # Chuẩn hóa danh sách các quốc gia theo châu lục
+    local_continents = {k: [c.lower().strip() for c in v] for k, v in continents.items()}
+
+    if location == "world":
         # Tạo cột 'year' để nhóm theo năm
         data_case["year"] = data_case["date"].dt.year
 
-        # Nhóm dữ liệu theo năm và tính tổng số ca mới cho mỗi năm
+        # Tổng hợp số ca mới trên toàn thế giới theo năm
+        yearly_data = data_case.groupby("year").sum(numeric_only=True).reset_index()
+
+        # Lặp qua từng dòng trong kết quả nhóm
+        for _, row in yearly_data.iterrows():
+            result.append({
+                "year": row["year"].item(),
+                "total_new_cases": row.sum()  # Tổng tất cả các quốc gia
+            })
+
+    elif location in local_continents:
+        countries_in_continent = local_continents[location]
+
+        # Lọc các quốc gia thuộc châu lục có trong data_case
+        available_countries = [c for c in countries_in_continent if c in data_case.columns]
+
+        if not available_countries:
+            return jsonify({"message": f"No data found for continent '{location}'."}), 404
+
+        # Tạo cột 'year' để nhóm theo năm
+        data_case["year"] = data_case["date"].dt.year
+
+        # Tổng hợp số ca mới cho các quốc gia thuộc châu lục theo năm
+        yearly_data = data_case.groupby("year")[available_countries].sum().reset_index()
+
+        # Lặp qua từng dòng trong kết quả nhóm
+        for _, row in yearly_data.iterrows():
+            result.append({
+                "year": row["year"].item(),
+                "total_new_cases": row[available_countries].sum()  # Tổng số ca của châu lục
+            })
+
+    elif location in data_case.columns:
+        # Tạo cột 'year' để nhóm theo năm
+        data_case["year"] = data_case["date"].dt.year
+
+        # Tổng hợp số ca mới cho quốc gia riêng lẻ theo năm
         yearly_data = data_case.groupby("year")[location].sum().reset_index()
 
-        # Lặp qua từng dòng trong kết quả nhóm và chuyển đổi kiểu dữ liệu từ int64 sang int
-        for index, row in yearly_data.iterrows():
+        # Lặp qua từng dòng trong kết quả nhóm
+        for _, row in yearly_data.iterrows():
             result.append({
-                "year": row["year"].item(),  # Chuyển từ int64 sang int bằng .item()
-                "total_new_cases": row[location].item()  # Chuyển từ int64 sang int bằng .item()
+                "year": row["year"].item(),
+                "total_new_cases": row[location].item()
             })
-    else:
-        # Nếu không tìm thấy quốc gia trong cột, trả về thông báo lỗi
-        return jsonify({"message": f"Location '{location}' not found"}), 404
-    
-    return jsonify(result)
 
-#hàm trả về dữ liệu Case của các quốc gia  theo Age và Sex
+    else:
+        # Nếu không tìm thấy quốc gia/châu lục trong dữ liệu
+        return jsonify({"message": f"Location '{location}' not found"}), 404
+
+    if not result:
+        return jsonify({"message": f"No data found for location '{location}'."}), 404
+
+    return jsonify(result)
 @app.route("/get_cases_by_age_sex", methods=["GET"])
 def get_cases_by_age_sex():
     location = request.args.get("location", "").lower()
@@ -244,8 +281,6 @@ def get_cases_by_age_sex():
         result.append(age_data)
     
     return jsonify(result)
- 
-#Hàm trả về số người Case theo Age và Sex    
 @app.route("/get_case_sum_by_age_sex", methods=["GET"])
 def get_case_sum_by_age_sex():
     location = request.args.get("location", "").lower()
@@ -323,8 +358,6 @@ def get_case_sum_by_age_sex():
         result.append(age_totals)
     
     return jsonify(result)   
-
-#Hàm trả về giá trị Case theo Age và Sex của Năm 
 @app.route("/get_case_sum_year_by_age_sex", methods=["GET"])
 def get_case_sum_year_by_age_sex():
     location = request.args.get("location", "").lower()
@@ -402,42 +435,64 @@ def get_case_sum_year_by_age_sex():
         result.append(age_totals)
     
     return jsonify(result)
-
-#Hàm trả về Deaths
 @app.route("/get_deaths", methods=["GET"])
 def get_deaths():
-    location = request.args.get("location", "").lower() 
+    location = request.args.get('location', "").lower()
     result = []
 
-    # Đảm bảo cột 'date' là kiểu datetime
-    data_deaths["date"] = pd.to_datetime(data_deaths["date"], errors='coerce')
+    # Chuẩn hóa danh sách các quốc gia của châu lục
+    local_continents = {k: [c.lower().strip() for c in v] for k, v in continents.items()}
+
+    # Kiểm tra nếu 'date' không phải datetime, chuyển đổi
+    data_deaths['date'] = pd.to_datetime(data_deaths['date'], errors='coerce')
 
     if location == "world":
-            for index, row in data_deaths.iterrows():
-                if pd.notna(row["date"]):  # Kiểm tra giá trị date hợp lệ
-                    daily_data = {
-                        "date": row["date"].strftime("%Y-%m-%d"),
-                        "countries": {}
-                    }
-                    for country in data_deaths.columns[1:]:  # Bỏ qua cột 'date'
-                        daily_data["countries"][country] = row[country] if pd.notna(row[country]) else 0
+        for _, row in data_deaths.iterrows():
+            if pd.notna(row['date']):
+                daily_data = {
+                    "date": row['date'].strftime("%Y-%m-%d"),
+                    "countries": {country: row[country] if pd.notna(row[country]) else 0 for country in data_deaths.columns[1:]}
+                }
+                result.append(daily_data)
+    elif location in local_continents:
+        countries_in_continent = local_continents[location]
+
+        # Kiểm tra quốc gia trong DataFrame
+        available_countries = [c for c in countries_in_continent if c in data_case.columns]
+        missing_countries = [c for c in countries_in_continent if c not in data_case.columns]
+
+        print("Available countries:", available_countries)  # Debug
+        print("Missing countries:", missing_countries)  # Debug
+
+        if not available_countries:
+            return jsonify({"message": f"No data found for the continent '{location}'."}), 404
+
+        for _, row in data_deaths.iterrows():
+            if pd.notna(row["date"]):
+                daily_data = {
+                    "date": row['date'].strftime("%Y-%m-%d"),
+                    "countries": {}
+                }
+
+                for country in available_countries:
+                    daily_data["countries"][country] = row[country] if pd.notna(row[country]) else 0
+
+                if daily_data["countries"]:
                     result.append(daily_data)
-    # Kiểm tra xem quốc gia có trong cột DataFrame không
-    if location in data_deaths.columns:
-        # Lặp qua các dòng của DataFrame để lấy dữ liệu theo từng ngày
-        for index, row in data_deaths.iterrows():
-            if pd.notna(row["date"]):   
+    elif location in data_deaths.columns:
+        for _, row in data_deaths.iterrows():
+            if pd.notna(row['date']):
                 result.append({
-                    "date": row["date"].strftime("%Y-%m-%d"),   
-                    "new_deaths": row[location]  
+                    "date": row['date'].strftime("%Y-%m-%d"),
+                    "new_cases": row[location]
                 })
     else:
-        # Nếu không tìm thấy quốc gia trong cột, trả về thông báo lỗi
         return jsonify({"message": f"Location '{location}' not found"}), 404
-    
-    return jsonify(result)
 
-# Hàm trả về  Sum_Deaths của các tháng
+    if not result:
+        return jsonify({"message": f"No data found for location '{location}'."}), 404
+
+    return jsonify(result)
 @app.route("/get_sum_deaths", methods=["GET"])
 def get_sum_deaths():
     location = request.args.get("location", "").lower() 
@@ -446,28 +501,65 @@ def get_sum_deaths():
     # Đảm bảo cột 'date' là kiểu datetime
     data_deaths["date"] = pd.to_datetime(data_deaths["date"], errors='coerce')
 
-    # Kiểm tra xem quốc gia có trong cột DataFrame không
-    if location in data_deaths.columns:
+    # Chuẩn hóa danh sách các quốc gia theo châu lục
+    local_continents = {k: [c.lower().strip() for c in v] for k, v in continents.items()}
+
+    if location == "world":
         # Tạo cột tháng-năm để nhóm theo tháng và năm
         data_deaths["month_year"] = data_deaths["date"].dt.to_period("M")
 
-        # Nhóm dữ liệu theo tháng-năm và tính tổng số ca mới cho mỗi tháng
-        monthly_data = data_deaths.groupby("month_year")[location].sum().reset_index()
+        # Tổng hợp số ca mới trên toàn thế giới theo tháng-năm
+        monthly_data = data_deaths.groupby("month_year").sum(numeric_only=True).reset_index()
 
         # Lặp qua từng dòng trong kết quả nhóm
-        for index, row in monthly_data.iterrows():
+        for _, row in monthly_data.iterrows():
             result.append({
                 "month_year": str(row["month_year"]),  # Định dạng tháng-năm
-                "total_new_deaths": row[location]  # Tổng số ca mới trong tháng
+                "total_new_cases": row.sum()  # Tổng tất cả các quốc gia trong tháng
             })
+
+    elif location in local_continents:
+        countries_in_continent = local_continents[location]
+
+        # Lọc các quốc gia thuộc châu lục có trong data_case
+        available_countries = [c for c in countries_in_continent if c in data_deaths.columns]
+
+        if not available_countries:
+            return jsonify({"message": f"No data found for continent '{location}'."}), 404
+
+        # Tạo cột tháng-năm để nhóm theo tháng và năm
+        data_deaths["month_year"] = data_deaths["date"].dt.to_period("M")
+
+        # Tổng hợp số ca mới cho các quốc gia thuộc châu lục theo tháng-năm
+        monthly_data = data_deaths.groupby("month_year")[available_countries].sum().reset_index()
+
+        # Lặp qua từng dòng trong kết quả nhóm
+        for _, row in monthly_data.iterrows():
+            result.append({
+                "month_year": str(row["month_year"]),  # Định dạng tháng-năm
+                "total_new_cases": row[available_countries].sum()  # Tổng số ca của châu lục
+            })
+
+    elif location in data_deaths.columns:
+        # Tạo cột tháng-năm để nhóm theo tháng và năm
+        data_deaths["month_year"] = data_deaths["date"].dt.to_period("M")
+        # Tổng hợp số ca mới cho quốc gia riêng lẻ theo tháng-năm
+        monthly_data = data_deaths.groupby("month_year")[location].sum().reset_index()
+        # Lặp qua từng dòng trong kết quả nhóm
+        for _, row in monthly_data.iterrows():
+            result.append({
+                "month_year": str(row["month_year"]),  # Định dạng tháng-năm
+                "total_new_cases": row[location]  # Tổng số ca mới trong tháng
+            })
+
     else:
-        # Nếu không tìm thấy quốc gia trong cột, trả về thông báo lỗi
+        # Nếu không tìm thấy quốc gia/châu lục trong dữ liệu
         return jsonify({"message": f"Location '{location}' not found"}), 404
-    
-    return jsonify(result)  
 
+    if not result:
+        return jsonify({"message": f"No data found for location '{location}'."}), 404
 
-#hàm trả về Sum_Deaths_Year
+    return jsonify(result)
 @app.route("/get_yearly_deaths", methods=["GET"])
 def get_yearly_deaths():
     location = request.args.get("location", "").lower() 
@@ -495,8 +587,6 @@ def get_yearly_deaths():
         return jsonify({"message": f"Location '{location}' not found"}), 404
     
     return jsonify(result)
-
-#Hàm trả về giá trị Deaths theo Age và Sex
 @app.route("/get_deaths_by_age_sex", methods=["GET"])
 def get_deaths_by_age_sex():
     location = request.args.get("location", "").lower()
