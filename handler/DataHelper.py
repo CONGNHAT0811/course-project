@@ -6,16 +6,14 @@ class DataHelper:
         self.data = self.read_csv_to_dataframe()
         self.continents = self.initContinents()
         self.local_continents = {k: [c.lower().strip() for c in v] for k, v in self.continents.items()}
-
-        
+            
     def read_csv_to_dataframe(self):
         file_path = self.data_path
         try:
             df = pd.read_csv(file_path)
             df.columns = df.columns.str.lower().str.strip()
             if 'date' in df.columns:
-                df['date'] = pd.to_datetime(df['date'], errors='coerce')
-
+                df['date'] = pd.to_datetime(df['date'], errors='coerce') 
             return df
         
         except FileNotFoundError:
@@ -25,6 +23,7 @@ class DataHelper:
         except Exception as e:
             print(f"Đã xảy ra lỗi khi đọc tệp {file_path}: {e}")
             return None
+
 
     def initContinents(self):
         continents = {
@@ -69,3 +68,6 @@ class DataHelper:
             ]
         }
         return continents
+
+ 
+

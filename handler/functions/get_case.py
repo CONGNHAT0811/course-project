@@ -3,8 +3,6 @@ from handler.DataHelper import DataHelper
 
 def fn_get_case(location: str, data_helper: DataHelper):
     result = []
-
-    # Nếu location là "world", lấy tất cả quốc gia
     if location == "world":
         for _, row in data_helper.data.iterrows():
             if pd.notna(row['date']):
@@ -14,8 +12,6 @@ def fn_get_case(location: str, data_helper: DataHelper):
                 }
                 result.append(daily_data)
         return result
-
-    # Nếu location là một châu lục, lấy dữ liệu cho các quốc gia trong châu lục
     if location in data_helper.local_continents:
         available_countries = [country for country in data_helper.local_continents[location] if country in data_helper.data.columns]
         if not available_countries:
@@ -30,8 +26,6 @@ def fn_get_case(location: str, data_helper: DataHelper):
                 if daily_data["countries"]:
                     result.append(daily_data)
         return result
-
-    # Nếu location là một quốc gia, lấy dữ liệu cho quốc gia đó
     if location in data_helper.data.columns:
         for _, row in data_helper.data.iterrows():
             if pd.notna(row['date']):
@@ -40,6 +34,69 @@ def fn_get_case(location: str, data_helper: DataHelper):
                     "new_cases": row[location]
                 })
         return result
-
-    # Nếu không tìm thấy location
     raise ValueError(f"No data found for location '{location}'.")
+
+def fn_get_total_case(location: str, data_helper: DataHelper):
+    total_result = {}
+
+    if location == "world":
+        for country in data_helper.data.columns[1:]:
+            total_result[country] = int(data_helper.data[country].fillna(0).sum())
+        return total_result
+
+    if location in data_helper.local_continents:
+        available_countries = [country for country in data_helper.local_continents[location] if country in data_helper.data.columns]
+        if not available_countries:
+            raise ValueError(f"No data found for the continent '{location}'.")
+
+        for country in available_countries:
+            total_result[country] = int(data_helper.data[country].fillna(0).sum())
+        return total_result
+
+    if location in data_helper.data.columns:
+        total_result[location] = int(data_helper.data[location].fillna(0).sum())
+        return total_result
+
+    raise ValueError(f"No data found for location '{location}'.")
+
+def fn_get_case_continent(location: str, data_helper: DataHelper):
+    result = {}  
+
+    if location == "world":
+        result["world"] = [
+            {
+                "date": row['date'].strftime("%Y-%m-%d"),
+                "total_cases": sum(
+                    row[country] if pd.notna(row[country]) else 0
+                    for country in data_helper.data.columns[1:]  
+                )
+            }
+            for _, row in data_helper.data.iterrows() if pd.notna(row['date'])
+        ]
+        
+        for continent, countries in data_helper.local_continents.items():
+            available_countries = [country for country in countries if country in data_helper.data.columns]
+            if available_countries:
+                result[continent] = [
+                    {
+                        "date": row['date'].strftime("%Y-%m-%d"),
+                        "total_cases": sum(row[country] if pd.notna(row[country]) else 0 for country in available_countries)
+                    }
+                    for _, row in data_helper.data.iterrows() if pd.notna(row['date'])
+                ]
+    elif location in data_helper.local_continents:
+        available_countries = [country for country in data_helper.local_continents[location] if country in data_helper.data.columns]
+        if not available_countries:
+            raise ValueError(f"No data found for the continent '{location}'.")
+        
+        result[location] = [
+            {
+                "date": row['date'].strftime("%Y-%m-%d"),
+                "total_cases": sum(row[country] if pd.notna(row[country]) else 0 for country in available_countries)
+            }
+            for _, row in data_helper.data.iterrows() if pd.notna(row['date'])
+        ]
+    else:
+        raise ValueError(f"No data found for location '{location}'.")
+    
+    return result
