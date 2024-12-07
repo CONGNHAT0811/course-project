@@ -1,0 +1,69 @@
+/* Reset CSS */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* Navbar Styles */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #003366;
+    /* Màu xanh đậm cho navbar */
+    padding: 10px 20px;
+    color: white;
+}
+
+/* Dropdown Styles */
+.dropdown {
+    display: flex;
+    align-items: center;
+}
+
+.dropdown select {
+    padding: 10px 15px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    background-color: #ffffff;
+    color: #003366;
+    cursor: pointer;
+    height: 40px;
+    width: 160px;
+    /* Giảm chiều rộng */
+    font-weight: bold;
+}
+
+.dropdown select:focus {
+    outline: none;
+    background-color: #ddd;
+}
+
+/* Tabs Styles */
+.tabs {
+    display: flex;
+    gap: 15px;
+}
+
+.tab {
+    background-color: white;
+    color: #003366;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.tab:hover {
+    background-color: #0056b3;
+    color: white;
+}
+
+.tab:focus {
+    outline: none;
+    background-color: #0056b3;
+    color: white;
+}

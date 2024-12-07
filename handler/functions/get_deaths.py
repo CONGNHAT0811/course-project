@@ -63,6 +63,41 @@ def fn_get_total_deaths(location: str, data_helper: DataHelper):
 
     raise ValueError(f"No data found for location '{location}'.")
 
+def fn_get_total_deaths_year(location: str, year: int, data_helper: DataHelper):
+    
+    total_result = {}
+
+    if 'date' not in data_helper.data.columns:
+        raise ValueError("The dataset does not contain a 'date' column.")
+    
+    data_helper.data['date'] = pd.to_datetime(data_helper.data['date'], errors='coerce')
+    data_helper.data['Year'] = data_helper.data['date'].dt.year
+
+    data_for_year = data_helper.data[data_helper.data["Year"] == year]
+    if data_for_year.empty:
+        raise ValueError(f"No data available for the year {year}.")
+
+    if location == "world":
+        for country in data_for_year.columns[1:]:
+            total_result[country] = int(data_for_year[country].fillna(0).sum())
+        return total_result
+
+    if location in data_helper.local_continents:
+        available_countries = [country for country in data_helper.local_continents[location] if country in data_for_year.columns]
+        if not available_countries:
+            raise ValueError(f"No data found for the continent '{location}' in {year}.")
+
+        for country in available_countries:
+            total_result[country] = int(data_for_year[country].fillna(0).sum())
+        return total_result
+
+    if location in data_for_year.columns:
+        total_result[location] = int(data_for_year[location].fillna(0).sum())
+        return total_result
+
+    raise ValueError(f"No data found for location '{location}' in {year}.")
+
+
 def fn_get_deaths_continent(location: str, data_helper: DataHelper):
     result = {}  
 
