@@ -1,0 +1,203 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.header {
+    background-color: #e0ecf8;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+.header h1 {
+    margin: 0;
+    color: black;
+    font-size: 40px;
+    font-weight: bold;
+    align-items: flex-start;
+
+}
+
+.header p {
+    margin: 0;
+    color: black;
+    font-size: 20px;
+    font-weight: bold;
+    align-items: flex-start;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #003366;
+    padding: 10px 20px;
+    color: white;
+}
+
+.dropdown {
+    display: flex;
+    align-items: center;
+}
+
+.dropdown select {
+    padding: 10px 15px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    background-color: #ffffff;
+    color: #003366;
+    cursor: pointer;
+    height: 40px;
+    width: 160px;
+    font-weight: bold;
+}
+
+.dropdown select:focus {
+    outline: none;
+    background-color: #ddd;
+}
+
+.tabs {
+    display: flex;
+    gap: 15px;
+}
+
+.tab {
+    background-color: white;
+    color: #003366;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.tab:hover {
+    background-color: #0056b3;
+    color: white;
+}
+
+.tab:focus {
+    outline: none;
+    background-color: #0056b3;
+    color: white;
+}
+
+.content {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: white;
+    color: #003366;
+    font-weight: bold;
+}
+
+.content {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.content_map {
+    display: flex;
+    width: 80%;
+    gap: 20px;
+    margin: 0 auto;
+}
+
+.content_mapchart {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+}
+
+.mapchart_button {
+    display: flex;
+    justify-content: left;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.tab {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    background: #f4f4f4;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+
+.mapchart {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto;
+    max-width: 800px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+}
+
+canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+.map-image {
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.map-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-top: 10px;
+}
+
+.color-dot {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    margin-right: 5px;
+    border-radius: 50%;
+}
+
+
+.content_table {
+    flex: 2;
+}
+
+.content_table h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.table_number {
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.table_number table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table_number th,
+.table_number td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: left;
+}
+
+.table_number th {
+    background: #f4f4f4;
+}

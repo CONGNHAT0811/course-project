@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify,  Response
+from flask import Flask, request, jsonify, render_template
 
 import pandas as pd
 import os
@@ -29,6 +29,12 @@ from handler.functions.get_vaccin_age_sex import fn_get_total_vaccin_age_sex
 
 
 app = Flask(__name__)
+@app.route("/")
+def index():
+    
+    return render_template("index.html")
+
+
 # Hàmm lấy ra giá trị từng ngày  New_cases theo location
 @app.route("/get_case", methods=["GET"])
 def get_case():
