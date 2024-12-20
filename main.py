@@ -24,10 +24,6 @@ from handler.functions.get_vaccin_age_sex import fn_get_vaccin_age_sex
 from handler.functions.get_vaccin_age_sex import fn_get_total_vaccin_age_sex
 
 
-
-
-
-
 app = Flask(__name__)
 @app.route("/")
 def index():
@@ -58,7 +54,8 @@ def get_case_continent():
         return jsonify(result)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
-
+    
+    
 #Hàm Lấy ra tổng gía trị Case của các quốc gia      
 @app.route("/get_total_case", methods=["GET"])
 def get_total_case():

@@ -99,6 +99,7 @@ body {
 
 .content {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
     margin-top: 20px;
 }
@@ -200,4 +201,46 @@ canvas {
 
 .table_number th {
     background: #f4f4f4;
+}
+
+.content_chart {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.area_chart,
+.Pyramid_chart {
+    flex: 1;
+    background-color: #f9f9f9;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.Pyramid_chart h2 {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.content_region {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+}
+
+.region_chart {
+    margin: 0 auto;
+    width: 100%;
+    max-width: 1000px;
+}
+
+canvas {
+    display: block;
+}
+
+h3 {
+    text-align: justify;
 }

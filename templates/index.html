@@ -8,8 +8,7 @@
   <link rel="stylesheet" href="/static/css/styles.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geov"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo@3.9.0/build/index.umd.min.js"></script>
 </head>
 
 <body>
@@ -41,7 +40,6 @@
         <div class="mapchart">
           <canvas id="geoMapChart" width="800" height="600"></canvas>
         </div>
-
       </div>
       <div class="content_table">
         <h2>Number of COVID-19 cases reported to WHO (cumulative total)</h2>
@@ -51,141 +49,61 @@
         </div>
       </div>
     </div>
+    <div class="content_chart">
+      <div class="area_chart">
+        <canvas id="covidChart" width="800" height="400"></canvas>
+      </div>
+      <div class="Pyramid_chart">
+        <h2 style="text-align:center">Population Pyramid</h2>
+        <canvas id="populationPyramid" width="800" height="500"></canvas>
+      </div>
+    </div>
+    <div class="content_region">
+      <h2>Covid-19 Weekly Cases by Region</h2>
+
+      <!-- Africa -->
+      <div class="region_chart">
+        <h3>Africa</h3>
+        <canvas id="africaChart" width="1000" height="200"></canvas>
+      </div>
+
+      <!-- Americas -->
+      <div class="region_chart">
+        <h3>Americas</h3>
+        <canvas id="americasChart" width="1000" height="200"></canvas>
+      </div>
+
+      <!-- Europe -->
+      <div class="region_chart">
+        <h3>Europe</h3>
+        <canvas id="europeChart" width="1000" height="200"></canvas>
+      </div>
+
+      <!-- Eastern Mediterranean -->
+      <div class="region_chart">
+        <h3>Eastern Mediterranean</h3>
+        <canvas id="easternMediterraneanChart" width="1000" height="200"></canvas>
+      </div>
+
+      <!-- South-East Asia -->
+      <div class="region_chart">
+        <h3>South-East Asia</h3>
+        <canvas id="southEastAsiaChart" width="1000" height="200"></canvas>
+      </div>
+
+      <!-- Western Pacific -->
+      <div class="region_chart">
+        <h3>Western Pacific</h3>
+        <canvas id="westernPacificChart" width="1000" height="200"></canvas>
+      </div>
+    </div>
   </div>
 
-  <script>
-    const data = {
-      "World": [],
-      "Continents": [
-        "Asia", "Europe", "Africa", "North America", "South America", "Oceania"
-      ],
-      "Countries": [
-        "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
-        "Azerbaijan", "Bahamas", "Bahrain", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bolivia", "Bosnia and Herzegovina",
-        "Botswana", "Brazil", "Brunei", "Burkina Faso", "Burundi", "Cambodia", "Canada", "Cape Verde", "Central African Republic", "Chad",
-        "Chile", "China", "Colombia", "Comoros", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czechia", "Denmark", "Dominica", "Dominican Republic",
-        "Djibouti", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Eswatini", "Ethiopia", "Finland", "France", "Gabon", "Gambia",
-        "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Haiti", "Honduras", "Hungary", "Iceland",
-        "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati",
-        "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malaysia",
-        "Maldives", "Malta", "Mauritania", "Mauritius", "Mexico", "Micronesia (country)", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco",
-        "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia",
-        "Norway", "Pakistan", "Palau", "Panama", "Paraguay", "Pakistan", "Palestine", "Peru", "Philippines", "Poland", "Portugal", "Qatar",
-        "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "San Marino", "Saudi Arabia",
-        "Senegal", "Serbia", "Seychelles", "Singapore", "Slovakia", "Slovenia", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain",
-        "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo",
-        "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Uganda", "United Arab Emirates", "United Kingdom", "United States",
-        "Uruguay", "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
-      ]
-    };
-
-    // Generate region options dynamically
-    const regionSelect = document.getElementById("region-select");
-    const worldOption = document.createElement("option");
-    worldOption.value = "world";
-    worldOption.textContent = "World";
-    worldOption.selected = true; // Default to "World"
-    regionSelect.appendChild(worldOption);
-
-    const continentGroup = document.createElement("optgroup");
-    continentGroup.label = "Continents";
-    data.Continents.forEach(continent => {
-      const option = document.createElement("option");
-      option.value = continent.toLowerCase();
-      option.textContent = continent;
-      continentGroup.appendChild(option);
-    });
-    regionSelect.appendChild(continentGroup);
-
-    const countryGroup = document.createElement("optgroup");
-    countryGroup.label = "Countries";
-    data.Countries.forEach(country => {
-      const option = document.createElement("option");
-      option.value = country.toLowerCase().replace(/\s+/g, "-");
-      option.textContent = country;
-      countryGroup.appendChild(option);
-    });
-    regionSelect.appendChild(countryGroup);   
-  </script>
-
-  <script>
-    // Dữ liệu GeoJSON mẫu
-    const geoData = {
-      type: "FeatureCollection",
-      features: [
-        {
-          type: "Feature",
-          geometry: {
-            type: "Polygon",
-            coordinates: [
-              [
-                [-100, 50],
-                [-80, 50],
-                [-80, 30],
-                [-100, 30],
-                [-100, 50]
-              ]
-            ]
-          },
-          properties: { name: "USA" }
-        },
-        {
-          type: "Feature",
-          geometry: {
-            type: "Polygon",
-            coordinates: [
-              [
-                [-140, 60],
-                [-100, 60],
-                [-100, 50],
-                [-140, 50],
-                [-140, 60]
-              ]
-            ]
-          },
-          properties: { name: "Canada" }
-        }
-      ]
-    };
-
-    // Dữ liệu hiển thị giá trị
-    const chartData = [
-      { feature: "USA", value: 3000000 },
-      { feature: "Canada", value: 1200000 }
-    ];
-
-    // Tạo biểu đồ
-    const ctx = document.getElementById('geoMapChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'choropleth',
-      data: {
-        labels: chartData.map(d => d.feature),
-        datasets: [{
-          label: 'COVID-19 Cases',
-          outline: geoData,
-          data: chartData
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          xy: {
-            projection: 'equalEarth'
-          }
-        },
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return `${context.label}: ${context.raw.value.toLocaleString()} cases`;
-              }
-            }
-          }
-        }
-      }
-    });
-  </script>
-
+  <!-- Liên kết với file index.js -->
+  <script src="/static/js/index.js"></script>
+  <script src="/static/js/area.js"></script>
+  <script src="/static/js/pyramidchart.js"></script>
+  <script src="/static/js/regionchart.js"></script>
 </body>
 
 </html>
