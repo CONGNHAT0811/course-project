@@ -1,4 +1,4 @@
-import pandas as pd
+import pandas as pd  
 from handler.DataHelper import DataHelper
 
 def fn_get_case_age_sex(location: str, data_helper: DataHelper):
@@ -32,20 +32,27 @@ def fn_get_case_age_sex(location: str, data_helper: DataHelper):
         "location": row['location'],
         "date": row['date'].strftime("%Y-%m-%d"),
         "age_groups": {
-            "1-10": {"male": row['male_1-10'], "female": row['female_1-10']},
-            "11-20": {"male": row['male_11-20'], "female": row['female_11-20']},
-            "21-30": {"male": row['male_21-30'], "female": row['female_21-30']},
-            "31-40": {"male": row['male_31-40'], "female": row['female_31-40']},
-            "41-50": {"male": row['male_41-50'], "female": row['female_41-50']},
-            "51-60": {"male": row['male_51-60'], "female": row['female_51-60']},
-            "61-70": {"male": row['male_61-70'], "female": row['female_61-70']},
-            "71-80": {"male": row['male_71-80'], "female": row['female_71-80']},
-            "80+": {"male": row['male_80+'], "female": row['female_80+']}
+            "1-10": {"male": row['male_1-10'], 
+                     "female": row['female_1-10']},
+            "11-20": {"male": row['male_11-20'],
+                      "female": row['female_11-20']},
+            "21-30": {"male": row['male_21-30'], 
+                      "female": row['female_21-30']},
+            "31-40": {"male": row['male_31-40'],
+                       "female": row['female_31-40']},
+            "41-50": {"male": row['male_41-50'], 
+                      "female": row['female_41-50']},
+            "51-60": {"male": row['male_51-60'], 
+                      "female": row['female_51-60']},
+            "61-70": {"male": row['male_61-70'],
+                       "female": row['female_61-70']},
+            "71-80": {"male": row['male_71-80'],
+                       "female": row['female_71-80']},
+            "80+": {"male": row['male_80+'],
+                     "female": row['female_80+']}
         }
     }, axis=1).tolist()
-
     return result
-
 
 def fn_get_total_case_age_sex(location: str, data_helper: DataHelper):
     result = []

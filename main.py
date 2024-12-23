@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, render_template
-
 import pandas as pd
 import os
 from handler.DataHelper import DataHelper
@@ -28,7 +27,7 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     
-    return render_template("index.html")
+    return render_template("index.html") 
 
 
 # Hàmm lấy ra giá trị từng ngày  New_cases theo location
@@ -187,10 +186,10 @@ def get_deaths_age_sex():
             os.path.join(os.getcwd(), "handler", "data", "deaths", "deaths_age_sex.csv")
         )
         result = fn_get_deaths_age_sex(location, data_helper)
-        return jsonify(result), 200  # Trả về kết quả JSON với mã trạng thái 200
+        return jsonify(result), 200 
     
     except ValueError as e:
-        return jsonify({"error": str(e)}), 404  # Lỗi không tìm thấy trả về 404
+        return jsonify({"error": str(e)}), 404  
 
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
@@ -205,10 +204,10 @@ def get_total_deaths_age_sex():
             os.path.join(os.getcwd(), "handler", "data", "deaths", "deaths_age_sex.csv")
         )
         result = fn_get_total_deaths_age_sex(location, data_helper)
-        return jsonify(result), 200  # Trả về kết quả JSON với mã trạng thái 200
+        return jsonify(result), 200  
     
     except ValueError as e:
-        return jsonify({"error": str(e)}), 404  # Lỗi không tìm thấy trả về 404
+        return jsonify({"error": str(e)}), 404  
 
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500    
@@ -225,10 +224,10 @@ def get_new_vaccin():
             os.path.join(os.getcwd(), "handler", "data", "vacccin_full_location", "vaccinations.csv")
         )
         result = fn_get_new_vaccin(location, data_helper)
-        return jsonify(result), 200  # Trả về kết quả JSON với mã trạng thái 200
+        return jsonify(result), 200  
     
     except ValueError as e:
-        return jsonify({"error": str(e)}), 404  # Lỗi không tìm thấy trả về 404
+        return jsonify({"error": str(e)}), 404  
 
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500   

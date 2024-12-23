@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo@3.9.0/build/index.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo"></script>
+
 </head>
 
 <body>
@@ -19,13 +21,12 @@
   <div class="navbar">
     <div class="dropdown">
       <select id="region-select">
-        <!-- Options will be dynamically generated -->
       </select>
     </div>
     <div class="tabs">
-      <button class="tab">Cases</button>
-      <button class="tab">Deaths</button>
-      <button class="tab">Vaccines</button>
+      <a href="/cases" class="tab active">Cases</a>
+      <a href="/deaths" class="tab">Deaths</a>
+      <a href="/vaccines" class="tab">Vaccines</a>
     </div>
   </div>
   <div class="content">
@@ -38,7 +39,7 @@
           <button class="tab">Total cumulative</button>
         </div>
         <div class="mapchart">
-          <canvas id="geoMapChart" width="800" height="600"></canvas>
+          <canvas id="canvas" width="1000" height="800"></canvas>
         </div>
       </div>
       <div class="content_table">
@@ -60,47 +61,58 @@
     </div>
     <div class="content_region">
       <h2>Covid-19 Weekly Cases by Region</h2>
-
-      <!-- Africa -->
       <div class="region_chart">
-        <h3>Africa</h3>
+        <div class="fact_region">
+          <div class="number_region">
+          </div>
+          <h3>Africa</h3>
+        </div>
         <canvas id="africaChart" width="1000" height="200"></canvas>
       </div>
-
-      <!-- Americas -->
       <div class="region_chart">
-        <h3>Americas</h3>
+        <div class="fact_region">
+          <div class="number_region">
+          </div>
+          <h3>Americas</h3>
+        </div>
         <canvas id="americasChart" width="1000" height="200"></canvas>
       </div>
-
-      <!-- Europe -->
       <div class="region_chart">
-        <h3>Europe</h3>
+        <div class="fact_region">
+          <div class="number_region">
+          </div>
+          <h3>Europe</h3>
+        </div>
         <canvas id="europeChart" width="1000" height="200"></canvas>
       </div>
-
-      <!-- Eastern Mediterranean -->
       <div class="region_chart">
-        <h3>Eastern Mediterranean</h3>
+        <div class="fact_region">
+          <div class="number_region">
+          </div>
+          <h3>Eastern Mediterranean</h3>
+        </div>
         <canvas id="easternMediterraneanChart" width="1000" height="200"></canvas>
       </div>
-
-      <!-- South-East Asia -->
       <div class="region_chart">
-        <h3>South-East Asia</h3>
+        <div class="fact_region">
+          <div class="number_region">
+          </div>
+          <h3>South-East Asia</h3>
+        </div>
         <canvas id="southEastAsiaChart" width="1000" height="200"></canvas>
       </div>
-
-      <!-- Western Pacific -->
       <div class="region_chart">
-        <h3>Western Pacific</h3>
+        <div class="fact_region">
+          <div class="number_region">
+          </div>
+          <h3>Western Pacific</h3>
+        </div>
         <canvas id="westernPacificChart" width="1000" height="200"></canvas>
       </div>
     </div>
   </div>
-
-  <!-- Liên kết với file index.js -->
   <script src="/static/js/index.js"></script>
+  <script src="/static/js/mapchart.js"></script>
   <script src="/static/js/area.js"></script>
   <script src="/static/js/pyramidchart.js"></script>
   <script src="/static/js/regionchart.js"></script>

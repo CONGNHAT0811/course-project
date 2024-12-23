@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Covid Cases Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo@3.9.0/build/index.umd.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>Covid Cases Dashboard</h1>
+        <p>Tracking Global COVID-19 Cases</p>
+    </div>
+    <div class="navbar">
+        <div class="dropdown">
+            <select id="region-select"></select>
+        </div>
+        <div class="tabs">
+            <a href="/cases" class="tab active">Cases</a>
+            <a href="/deaths" class="tab">Deaths</a>
+            <a href="/vaccines" class="tab">Vaccines</a>
+        </div>
+    </div>
+    <div class="content">
+        <div class="content_map">
+            <div class="content_mapchart">
+                <div class="mapchart_button">
+                    <button class="tab" data-year="2021">2021</button>
+                    <button class="tab" data-year="2022">2022</button>
+                    <button class="tab" data-year="2023">2023</button>
+                    <button class="tab" data-year="total">Total cumulative</button>
+                </div>
+                <div class="mapchart">
+                    <canvas id="casesMap"></canvas>
+                </div>
+            </div>
+            <div class="content_table">
+                <h2>Confirmed Cases by Country</h2>
+                <div class="table_number">
+                    <table id="casesTable">
+                        <thead>
+                            <tr>
+                                <th>Country</th>
+                                <th>Total Cases</th>
+                                <th>New Cases</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="content_chart">
+            <div class="area_chart">
+                <h2>Cases Trend Over Time</h2>
+                <canvas id="casesTrend"></canvas>
+            </div>
+            <div class="Pyramid_chart">
+                <h2>Cases by Age Group</h2>
+                <canvas id="casesByAge"></canvas>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/cases.js"></script>
+</body>
+</html> 
