@@ -1,180 +1,261 @@
 import pandas as pd
 from handler.DataHelper import DataHelper
 
-def fn_get_new_vaccin(location: str, data_helper: DataHelper, year: str = "total"):
-    data_helper.data['location'] = data_helper.data['location'].str.strip().str.lower()
-    location = location.strip().lower()
-
-    data_helper.data['date'] = pd.to_datetime(data_helper.data['date'], errors='coerce')
-    if year != "total":
-        data_helper.data = data_helper.data[data_helper.data['date'].dt.year.astype(str) == year]
-    if location == "world":
-        filtered_data = data_helper.data[pd.notna(data_helper.data['date'])]
-        grouped_data = filtered_data.groupby('location')[['new_people_fully_vaccinated']].sum()
-        grouped_data = grouped_data.applymap(abs)
-        result = grouped_data.reset_index().to_dict(orient='records')
+def fn_get_vaccin(location: str, data_helper: DataHelper, year: str = None):
+    try:
+        result = []
         
-        if not isinstance(result, list):
-            result = [result]
-    elif location in data_helper.local_continents:
-        available_countries = [
-            country.lower() for country in data_helper.local_continents[location]
-            if country.lower() in data_helper.data['location'].values
-        ]
-        if not available_countries:
-            raise ValueError(f"No data found for the continent '{location}'")
-
-        filtered_data = data_helper.data[data_helper.data['location'].isin(available_countries)]
-        grouped_data = filtered_data.groupby('location')[['new_people_fully_vaccinated']].sum()
-        grouped_data = grouped_data.applymap(abs)
-        result = grouped_data.reset_index().to_dict(orient='records')
+        # Thêm log để debug
+        print(f"Processing request for location: {location}, year: {year}")
         
-        if not isinstance(result, list):
-            result = [result]
-    else:
-        filtered_data = data_helper.data[data_helper.data['location'] == location]
-        if filtered_data.empty:
-            raise ValueError(f"No data found for the specified location '{location}'")
-
-        if year == "total":
-            total_vaccinated = filtered_data[['new_people_fully_vaccinated']].sum()
-            total_vaccinated = total_vaccinated.abs()
-            result = [{
-                "location": location,
-                "new_people_fully_vaccinated": float(total_vaccinated['new_people_fully_vaccinated'])
-            }]
+        if location == "world":
+            for _, row in data_helper.data.iterrows():
+                if pd.notna(row['date']):
+                    if year and year != "total" and str(row['date'].year) != str(year):
+                        continue
+                    
+                    total_for_day = 0
+                    for country in data_helper.data.columns[1:]:
+                        if pd.notna(row[country]):
+                            total_for_day += float(row[country])
+                    
+                    # Thêm data point ngay cả khi total = 0
+                    daily_data = {
+                        "date": row['date'].strftime("%Y-%m-%d"),
+                        "total_cases": float(total_for_day)
+                    }
+                    result.append(daily_data)
+        
+        elif location in ["africa", "asia", "europe", "northamerica", "southamerica", "oceania"]:
+            
+            countries_in_location = data_helper.get_countries_in_continent(location)
+            if not countries_in_location:
+                print(f"Warning: No countries found for {location}")
+                return [{
+                    "date": f"{year}-01-01",
+                    "total_cases": 0
+                }]
+            
+            print(f"Found {len(countries_in_location)} countries in {location}: {countries_in_location}")
+            
+            # Kiểm tra xem các quốc gia có tồn tại trong dữ liệu không
+            available_countries = [
+                country for country in countries_in_location 
+                if country in data_helper.data.columns
+            ]
+            print(f"Available countries in data: {available_countries}")
+            
+            for _, row in data_helper.data.iterrows():
+                if pd.notna(row['date']):
+                    if year and year != "total" and str(row['date'].year) != str(year):
+                        continue
+                    
+                    total_for_day = 0
+                    valid_count = 0  # Đếm số quốc gia có dữ liệu
+                    
+                    for country in available_countries:  # Sử dụng available_countries thay vì countries_in_location
+                        if pd.notna(row[country]):
+                            try:
+                                value = float(row[country])
+                                total_for_day += value
+                                valid_count += 1
+                            except (ValueError, TypeError) as e:
+                                print(f"Error converting value for {country}: {row[country]}")
+                                continue
+                    
+                    # Chỉ thêm vào kết quả nếu có ít nhất một quốc gia có dữ liệu
+                    if valid_count > 0:
+                        daily_data = {
+                            "date": row['date'].strftime("%Y-%m-%d"),
+                            "total_cases": float(total_for_day)
+                        }
+                        result.append(daily_data)
+            
+            # Kiểm tra kết quả
+            print(f"Generated {len(result)} data points for {location}")
+            if not result:
+                print(f"Warning: No data points generated for {location}")
+                return [{
+                    "date": f"{year}-01-01",
+                    "total_cases": 0
+                }]
+        
         else:
-            total_vaccinated = filtered_data[['new_people_fully_vaccinated']].sum()
-            total_vaccinated = total_vaccinated.abs()
-            result = [{
-                "location": location,
-                "year": year,
-                "new_people_fully_vaccinated": float(total_vaccinated['new_people_fully_vaccinated'])
+            if location not in data_helper.data.columns:
+                print(f"Available columns: {data_helper.data.columns}")  # Debug log
+                raise ValueError(f"Country not found: {location}")
+                
+            for _, row in data_helper.data.iterrows():
+                if pd.notna(row['date']):
+                    if year and year != "total" and str(row['date'].year) != str(year):
+                        continue
+                    
+                    if pd.notna(row[location]):
+                        daily_data = {
+                            "date": row['date'].strftime("%Y-%m-%d"),
+                            "total_cases": float(row[location])
+                        }
+                        result.append(daily_data)
+
+        # Kiểm tra kết quả
+        print(f"Found {len(result)} data points")  # Debug log
+        
+        if not result:
+            # Trả về dữ liệu mẫu thay vì mảng rỗng
+            return [{
+                "date": f"{year}-01-01",
+                "total_cases": 0
             }]
 
-    return result
-
-
-def fn_get_total_new_vaccin(location: str, data_helper: DataHelper, year: str = "total"):
-    result = []
-    
-    # Chuẩn hóa dữ liệu đầu vào
-    data_helper.data['location'] = data_helper.data['location'].str.strip().str.lower()
-    location = location.strip().lower()
-    
-    # Chuyển đổi cột date và lọc dữ liệu hợp lệ
-    data_helper.data['date'] = pd.to_datetime(data_helper.data['date'], errors='coerce')
-    filtered_data = data_helper.data[pd.notna(data_helper.data['date'])]
-    filtered_data['new_people_fully_vaccinated'] = filtered_data['new_people_fully_vaccinated'].fillna(0)
-    
-    # Lọc theo năm nếu cần
-    if year != "total":
-        filtered_data = filtered_data[filtered_data['date'].dt.year == int(year)]
-
-    # Xử lý dữ liệu theo location
-    if location == "world":
-        for date, date_data in filtered_data.groupby('date'):
-            total_fully_vaccinated = date_data['new_people_fully_vaccinated'].sum()
-            result.append({
-                "location": "world",
-                "date": date.strftime("%Y-%m-%d"),
-                "new_people_fully_vaccinated": int(abs(total_fully_vaccinated))
-            })
-        return sorted(result, key=lambda x: x['date'])
-
-    elif location in data_helper.local_continents:
-        # Lọc dữ liệu theo các quốc gia trong châu lục
-        continent_countries = [c.lower() for c in data_helper.local_continents[location]]
-        continent_data = filtered_data[filtered_data['location'].isin(continent_countries)]
+        return sorted(result, key=lambda x: x["date"])
         
-        # Tổng hợp dữ liệu theo ngày
-        for date, date_data in continent_data.groupby('date'):
-            total_fully_vaccinated = date_data['new_people_fully_vaccinated'].sum()
-            result.append({
-                "location": location,
-                "date": date.strftime("%Y-%m-%d"),
-                "new_people_fully_vaccinated": int(abs(total_fully_vaccinated))
-            })
-        return sorted(result, key=lambda x: x['date'])
+    except Exception as e:
+        print(f"Error in fn_get_case: {str(e)}")
+        # Trả về dữ liệu mẫu trong trường hợp lỗi
+        return [{
+            "date": f"{year}-01-01",
+            "total_cases": 0
+        }]
 
-    else:
-        # Xử lý cho một quốc gia cụ thể
-        country_data = filtered_data[filtered_data['location'] == location]
-        for date, date_data in country_data.groupby('date'):
-            total_fully_vaccinated = date_data['new_people_fully_vaccinated'].sum()
-            result.append({
-                "location": location,
-                "date": date.strftime("%Y-%m-%d"),
-                "new_people_fully_vaccinated": int(abs(total_fully_vaccinated))
-            })
-        return sorted(result, key=lambda x: x['date'])
-
-
-
- 
-#vẽ area
-
-def fn_get_total_new_vaccin_continent(location: str, data_helper: DataHelper, year: str = "total"):
-    # Chuẩn hóa dữ liệu đầu vào
-    data_helper.data['location'] = data_helper.data['location'].str.strip().str.lower()
-    location = location.strip().lower()
-    
-    # Chuyển đổi date và lọc dữ liệu
-    data_helper.data['date'] = pd.to_datetime(data_helper.data['date'], errors='coerce')
-    filtered_data = data_helper.data[pd.notna(data_helper.data['date'])]
-    filtered_data['new_people_fully_vaccinated'] = filtered_data['new_people_fully_vaccinated'].fillna(0)
-
-    # Lọc theo năm nếu cần
-    if year != "total":
-        filtered_data = filtered_data[filtered_data['date'].dt.year == int(year)]
-
-    # Chuẩn bị kết quả dạng array
-    result = []
+def fn_get_total_vaccin(location: str, data_helper: DataHelper):
+    total_result = {}
 
     if location == "world":
-        # Tổng hợp dữ liệu theo ngày
-        daily_data = filtered_data.groupby('date').agg({
-            'new_people_fully_vaccinated': 'sum'
-        }).reset_index()
+        for country in data_helper.data.columns[1:]:
+            total_result[country] = int(data_helper.data[country].fillna(0).sum())
+        return total_result
 
-        # Chuyển đổi thành array of objects
-        for _, row in daily_data.iterrows():
-            result.append({
-                'date': row['date'].strftime('%Y-%m-%d'),
-                'total_cases': float(abs(row['new_people_fully_vaccinated']))
-            })
+    if location in data_helper.local_continents:
+        available_countries = [country for country in data_helper.local_continents[location] if country in data_helper.data.columns]
+        if not available_countries:
+            raise ValueError(f"No data found for the continent '{location}'.")
 
-    elif location in data_helper.local_continents:
-        # Lọc dữ liệu cho châu lục cụ thể
-        continent_countries = [c.lower() for c in data_helper.local_continents[location]]
-        continent_data = filtered_data[filtered_data['location'].isin(continent_countries)]
+        for country in available_countries:
+            total_result[country] = int(data_helper.data[country].fillna(0).sum())
+        return total_result
+
+    if location in data_helper.data.columns:
+        total_result[location] = int(data_helper.data[location].fillna(0).sum())
+        return total_result
+
+    raise ValueError(f"No data found for location '{location}'.")
+
+def fn_get_total_vaccin_year(location: str, year: int, data_helper: DataHelper):
+    
+    total_result = {}
+    if 'date' not in data_helper.data.columns:
+        raise ValueError("The dataset does not contain a 'date' column.")
+    data_helper.data['date'] = pd.to_datetime(data_helper.data['date'], errors='coerce')
+    data_helper.data['Year'] = data_helper.data['date'].dt.year
+    data_for_year = data_helper.data[data_helper.data["Year"] == year]
+    
+    if data_for_year.empty:
+        raise ValueError(f"No data available for the year {year}.")
+    if location == "world":
+        for country in data_for_year.columns[1:]:
+            total_result[country] = int(data_for_year[country].fillna(0).sum())
+        return total_result
+    if location in data_helper.local_continents:
         
-        # Tổng hợp dữ liệu theo ngày cho châu lục
-        daily_data = continent_data.groupby('date').agg({
-            'new_people_fully_vaccinated': 'sum'
-        }).reset_index()
+        available_countries = [country for country in data_helper.local_continents[location] if country in data_for_year.columns]
+        if not available_countries:
+            raise ValueError(f"No data found for the continent '{location}' in {year}.")
 
-        # Chuyển đổi thành array of objects
-        for _, row in daily_data.iterrows():
-            result.append({
-                'date': row['date'].strftime('%Y-%m-%d'),
-                'total_cases': float(abs(row['new_people_fully_vaccinated']))
-            })
+        for country in available_countries:
+            
+            total_result[country] = int(data_for_year[country].fillna(0).sum())
+            
+        return total_result
 
+    if location in data_for_year.columns:
+        total_result[location] = int(data_for_year[location].fillna(0).sum())
+        return total_result
+
+    raise ValueError(f"No data found for location '{location}' in {year}.")
+
+
+
+def fn_get_vaccin_continent(location: str, data_helper: DataHelper, year):
+    # Kiểm tra data trước khi xử lý
+    if data_helper is None or data_helper.data is None:
+        return None
+        
+    result = {}
+
+    # Lọc dữ liệu theo năm nếu year không phải là "total"
+    if year and year != "total":
+        data_helper.data['date'] = pd.to_datetime(data_helper.data['date'], errors='coerce')
+        data_helper.data = data_helper.data[
+            data_helper.data['date'].dt.year == year
+        ]
+
+    # Tính tổng toàn thế giới
+    if location == "world":
+        # Tổng thế giới từng ngày
+        result["world"] = [
+            {
+                "date": row['date'].strftime("%Y-%m-%d"),
+                "total_cases": sum(
+                    row[country] if pd.notna(row[country]) else 0
+                    for country in data_helper.data.columns[1:]  # Loại bỏ cột 'date'
+                )
+            }
+            for _, row in data_helper.data.iterrows() if pd.notna(row['date'])
+        ]
+
+        # Tổng thế giới toàn bộ
+        result["world_total"] = sum(
+            row[country] if pd.notna(row[country]) else 0
+            for _, row in data_helper.data.iterrows()
+            for country in data_helper.data.columns[1:]
+        )
+
+        # Tính tổng từng châu lục
+        for continent, countries in data_helper.local_continents.items():
+            available_countries = [country for country in countries if country in data_helper.data.columns]
+            if available_countries:
+                # Tổng từng ngày
+                result[continent] = [
+                    {
+                        "date": row['date'].strftime("%Y-%m-%d"),
+                        "total_cases": sum(
+                            row[country] if pd.notna(row[country]) else 0
+                            for country in available_countries
+                        )
+                    }
+                    for _, row in data_helper.data.iterrows() if pd.notna(row['date'])
+                ]
+                # Tổng toàn bộ
+                result[f"{continent}_total"] = sum(
+                    row[country] if pd.notna(row[country]) else 0
+                    for _, row in data_helper.data.iterrows()
+                    for country in available_countries
+                )
+
+    # Tính tổng cho từng châu lục khi location là một châu lục
+    elif location in data_helper.local_continents:
+        available_countries = [country for country in data_helper.local_continents[location] if country in data_helper.data.columns]
+        if not available_countries:
+            raise ValueError(f"No data found for the continent '{location}'.")
+        
+        # Tổng từng ngày
+        result[location] = [
+            {
+                "date": row['date'].strftime("%Y-%m-%d"),
+                "total_cases": sum(
+                    row[country] if pd.notna(row[country]) else 0
+                    for country in available_countries
+                )
+            }
+            for _, row in data_helper.data.iterrows() if pd.notna(row['date'])
+        ]
+        # Tổng toàn bộ
+        result[f"{location}_total"] = sum(
+            row[country] if pd.notna(row[country]) else 0
+            for _, row in data_helper.data.iterrows()
+            for country in available_countries
+        )
     else:
-        # Lọc dữ liệu cho quốc gia cụ thể
-        country_data = filtered_data[filtered_data['location'] == location]
-        daily_data = country_data.groupby('date').agg({
-            'new_people_fully_vaccinated': 'sum'
-        }).reset_index()
+        raise ValueError(f"No data found for location '{location}'.")
 
-        # Chuyển đổi thành array of objects
-        for _, row in daily_data.iterrows():
-            result.append({
-                'date': row['date'].strftime('%Y-%m-%d'),
-                'total_cases': float(abs(row['new_people_fully_vaccinated']))
-            })
-
-    # Sắp xếp kết quả theo ngày
-    result.sort(key=lambda x: x['date'])
     return result

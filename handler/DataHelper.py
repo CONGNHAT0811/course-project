@@ -10,7 +10,7 @@ class DataHelper:
     def read_csv_to_dataframe(self):
         file_path = self.data_path
         try:
-            df = pd.read_csv(file_path)
+            df = pd.read_csv(file_path, low_memory=False)
             df.columns = df.columns.str.lower().str.strip()
             if 'date' in df.columns:
                 df['date'] = pd.to_datetime(df['date'], errors='coerce') 
