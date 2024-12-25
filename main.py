@@ -3,15 +3,11 @@ import pandas as pd
 import os
 from handler.DataHelper import DataHelper
 
-from handler.functions.get_case import fn_get_case
-from handler.functions.get_case import fn_get_total_case
-from handler.functions.get_case import fn_get_total_case_year
-from handler.functions.get_case import fn_get_case_continent
+from handler.functions.get_case import fn_get_case,fn_get_case_continent,fn_get_total_case,fn_get_total_case_year
 from handler.functions.get_case_age_sex import fn_get_case_age_sex
 
 from handler.functions.get_deaths_age_sex import fn_get_deaths_age_sex
-from handler.functions.get_deaths import fn_get_deaths
-from handler.functions.get_deaths import fn_get_total_deaths_year, fn_get_deaths_continent, fn_get_total_deaths
+from handler.functions.get_deaths import fn_get_total_deaths_year, fn_get_deaths_continent, fn_get_total_deaths,fn_get_deaths
 
 from handler.functions.get_new_vaccin import fn_get_new_vaccin, fn_get_total_new_vaccin,fn_get_total_new_vaccin_continent
 from handler.functions.get_vaccin_age_sex import fn_get_vaccin_age_sex
