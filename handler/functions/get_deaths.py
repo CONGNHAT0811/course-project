@@ -7,38 +7,55 @@ def fn_get_deaths(location: str, data_helper: DataHelper):
     if location == "world":
         for _, row in data_helper.data.iterrows():
             if pd.notna(row['date']):
+                # Kiểm tra năm nếu có tham số `year`
+                if year and row['date'].year != year:
+                    continue
+                
+                # Tính tổng ca bệnh cho tất cả các quốc gia
                 daily_data = {
                     "date": row['date'].strftime("%Y-%m-%d"),
-                    "countries": {country: row[country] if pd.notna(row[country]) else 0 for country in data_helper.data.columns[1:]}
+                    "total_cases": sum(
+                        row[country] if pd.notna(row[country]) else 0 
+                        for country in data_helper.data.columns[1:]
+                    )
                 }
                 result.append(daily_data)
         return result
 
     if location in data_helper.local_continents:
-        available_countries = [country for country in data_helper.local_continents[location] if country in data_helper.data.columns]
+        available_countries = [
+            country for country in data_helper.local_continents[location] 
+            if country in data_helper.data.columns
+        ]
+        
         if not available_countries:
             raise ValueError(f"No data found for the continent '{location}'.")
 
         for _, row in data_helper.data.iterrows():
             if pd.notna(row['date']):
+                if year and row['date'].year != year:
+                    continue
                 daily_data = {
                     "date": row['date'].strftime("%Y-%m-%d"),
-                    "countries": {country: row[country] if pd.notna(row[country]) else 0 for country in available_countries}
+                    "total_cases": sum(
+                        row[country] if pd.notna(row[country]) else 0
+                        for country in available_countries
+                    )
                 }
-                if daily_data["countries"]:
-                    result.append(daily_data)
+                result.append(daily_data)
         return result
-
     if location in data_helper.data.columns:
         for _, row in data_helper.data.iterrows():
             if pd.notna(row['date']):
+                if year and row['date'].year != year:
+                    continue
                 result.append({
                     "date": row['date'].strftime("%Y-%m-%d"),
-                    "new_deaths": row[location]
+                    "new_cases": row[location]
                 })
         return result
-
     raise ValueError(f"No data found for location '{location}'.")
+
 
 def fn_get_total_deaths(location: str, data_helper: DataHelper):
     total_result = {}

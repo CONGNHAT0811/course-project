@@ -139,7 +139,7 @@ body {
     justify-content: center;
     align-items: center;
     margin: 20px auto;
-    max-width: 800px;
+    max-width: 1000px;
     border: 1px solid #ddd;
     padding: 10px;
     border-radius: 10px;
@@ -230,33 +230,116 @@ canvas {
     gap: 20px;
     padding: 20px;
 }
-
 .region_chart {
     margin: 0 auto;
     width: 100%;
     max-width: 1000px;
     display: flex;
 }
-
 canvas {
     display: block;
 }
-
 h3 {
     text-align: justify;
     align-items: center;
 }
-
 .tab.active {
     background-color: #0056b3;
     color: white;
 }
-
 .tabs a {
     text-decoration: none;
     color: inherit;
 }
-
 .tabs a:hover {
     text-decoration: none;
+}
+.table_number {
+    width: 80%;
+    margin: 20px auto;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+th {
+    background-color: #f2f2f2;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 10px 12px;
+}
+td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+}
+.sticky-column {
+    position: sticky;
+    left: 0;
+    background-color: #f2f2f2;
+    z-index: 2;
+}
+.bar-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+.bar {
+    height: 20px;
+    border-radius: 5px;
+    width: 0;
+    position: relative;
+}
+.bar span {
+    position: absolute;
+    left: 5px;
+    color: #fff;
+    font-weight: bold;
+    z-index: 1;
+}
+.low {
+    background-color: #FF4C4C;
+}
+.medium {
+    background-color: #FFB84C;
+}
+.high {
+    background-color: #4CAF50;
+}
+.number-value {
+    width: 50px;
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.mapchart_button input[type="radio"] {
+    display: none;
+}
+
+.mapchart_button label.tab {
+    display: inline-block;
+    padding: 10px 20px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background-color: #f8f9fa;
+    margin-right: 5px;
+}
+
+.mapchart_button input[type="radio"]:checked+label.tab {
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+}
+
+.mapchart_button label.tab:hover {
+    background-color: #e9ecef;
+}
+
+.mapchart_button input[type="radio"]:checked+label.tab:hover {
+    background-color: #0056b3;
 }
