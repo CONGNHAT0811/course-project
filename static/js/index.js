@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = {
         "World": [],
         "Continents": [
-            "Asia", "Europe", "Africa", "North America", "South America", "Oceania"
+            "Asia", "Europe", "Africa", "NorthAmerica", "SouthAmerica", "Oceania"
         ],
         "Countries": [
             "Afghanistan", "Algeria", "Albania", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia",

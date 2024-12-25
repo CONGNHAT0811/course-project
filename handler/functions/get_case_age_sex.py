@@ -25,10 +25,11 @@ def fn_get_case_age_sex(location: str, data_helper: DataHelper, year: str):
         if filtered_data.empty:
             raise ValueError(f"No data found for the specified location '{location}'")
 
-    # Nếu year khác "total", lọc dữ liệu theo năm
+    # Thay đổi cách lọc theo năm
     if year != "total":
         try:
             year = int(year)
+            # Chỉ lấy dữ liệu của năm được chỉ định
             filtered_data = filtered_data[filtered_data['date'].dt.year == year]
         except ValueError:
             raise ValueError(f"Invalid year: {year}")

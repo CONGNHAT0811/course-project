@@ -7,9 +7,9 @@
 	<title>Covid Dashboard</title>
 	<link rel="stylesheet" href="/static/css/styles.css">
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-	<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo@3.9.0/build/index.umd.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo@3.9.0/build/index.umd.min.js"></script>
 
 </head>
 
@@ -24,9 +24,12 @@
 			</select>
 		</div>
 		<div class="tabs">
-			<a href="/cases" class="tab active">Cases</a>
-			<a href="/deaths" class="tab">Deaths</a>
-			<a href="/vaccines" class="tab">Vaccines</a>
+			<a href="#" class="tab active" data-api="/get_total_case" data-case-api="/get_case"
+				data-age-api="/get_case_age_sex" data-continent-api="/get_case_continent">Cases</a>
+			<a href="#" class="tab" data-api="/get_total_deaths" data-case-api="/get_deaths"
+				data-age-api="/get_deaths_age_sex" data-continent-api="/get_deaths_continent">Deaths</a>
+			<a href="#" class="tab" data-api="/get_new_vaccin" data-case-api="/get_total_new_vaccin_continent"
+				data-age-api="/get_vaccin_age_sex" data-continent-api="/get_total_new_vaccin">Vaccines</a>
 		</div>
 	</div>
 	<div class="content">
@@ -53,13 +56,12 @@
 				</div>
 			</div>
 			<div class="content_table">
-				<h2>Number of COVID-19 cases reported to WHO (cumulative total)</h2>
 				<div class="table_number">
 					<table>
 						<thead>
 							<tr>
 								<th class="sticky-column">Country</th>
-								<th>Cases</th>
+								<th>Number</th>
 							</tr>
 						</thead>
 						<tbody id="countryTableBody">
@@ -77,62 +79,52 @@
 				<canvas id="populationPyramid" width="800" height="500"></canvas>
 			</div>
 		</div>
-		<div class="content_region">
-			<h2>Covid-19 Weekly Cases by Region</h2>
+		<div class="region-charts-container">
 			<div class="region_chart">
 				<div class="fact_region">
-					<div class="number_region">
-					</div>
+					<div class="number_region">0</div>
 					<h3>Africa</h3>
 				</div>
-				<canvas id="africaChart" width="1000" height="200"></canvas>
+				<canvas id="africaChart"></canvas>
 			</div>
 			<div class="region_chart">
 				<div class="fact_region">
-					<div class="number_region">
-					</div>
-					<h3>Americas</h3>
+					<div class="number_region">0</div>
+					<h3>Asia</h3>
 				</div>
-				<canvas id="americasChart" width="1000" height="200"></canvas>
+				<canvas id="asiaChart"></canvas>
 			</div>
 			<div class="region_chart">
 				<div class="fact_region">
-					<div class="number_region">
-					</div>
+					<div class="number_region">0</div>
 					<h3>Europe</h3>
 				</div>
-				<canvas id="europeChart" width="1000" height="200"></canvas>
+				<canvas id="europeChart"></canvas>
 			</div>
 			<div class="region_chart">
 				<div class="fact_region">
-					<div class="number_region">
-					</div>
-					<h3>Eastern Mediterranean</h3>
+					<div class="number_region">0</div>
+					<h3>southamerica</h3>
 				</div>
-				<canvas id="easternMediterraneanChart" width="1000" height="200"></canvas>
+				<canvas id="southamericaChart"></canvas>
 			</div>
 			<div class="region_chart">
 				<div class="fact_region">
-					<div class="number_region">
-					</div>
-					<h3>South-East Asia</h3>
+					<div class="number_region">0</div>
+					<h3>northamerica</h3>
 				</div>
-				<canvas id="southEastAsiaChart" width="1000" height="200"></canvas>
+				<canvas id="northamericaChart"></canvas>
 			</div>
 			<div class="region_chart">
 				<div class="fact_region">
-					<div class="number_region">
-					</div>
-					<h3>Western Pacific</h3>
+					<div class="number_region">0</div>
+					<h3>oceania</h3>
 				</div>
-				<canvas id="westernPacificChart" width="1000" height="200"></canvas>
+				<canvas id="oceaniaChart"></canvas>
 			</div>
 		</div>
 	</div>
 	<script src="/static/js/index.js"></script>
-	<script src="/static/js/area.js"></script>
-	<script src="/static/js/pyramidchart.js"></script>
-	<script src="/static/js/regionchart.js"></script>
 </body>
 <script>
 	let worldChart;
@@ -141,8 +133,8 @@
 	function updateTable(caseData) {
 		const countriesData = Object.entries(caseData)
 			.filter(([country]) => {
-				const nonCountries = ['Year', 'world', 'asia', 'europe', 'africa', 'north america', 
-					'south america', 'oceania', 'european union (27)', 'high-income countries', 
+				const nonCountries = ['Year', 'world', 'asia', 'europe', 'africa', 'north america',
+					'south america', 'oceania', 'european union (27)', 'high-income countries',
 					'low-income countries', 'lower-middle-income countries', 'upper-middle-income countries'];
 				return !nonCountries.includes(country.toLowerCase());
 			})
@@ -154,7 +146,7 @@
 
 		const maxNumber = Math.max(...countriesData.map(d => d.number));
 		const tableBody = document.getElementById("countryTableBody");
-		
+
 		tableBody.innerHTML = '';
 
 		countriesData.forEach((data) => {
@@ -176,7 +168,7 @@
 
 			const bar = document.createElement("div");
 			bar.classList.add("bar");
-			bar.style.width = `${(data.number / maxNumber) * 80}%`; 
+			bar.style.width = `${(data.number / maxNumber) * 80}%`;
 			bar.style.marginLeft = "30px";
 
 			if (data.number < 100000) {
@@ -197,13 +189,14 @@
 	}
 
 	function updateMapChart() {
+		const apis = getCurrentAPIs();
 		const regionSelect = document.getElementById('region-select');
 		const yearRadio = document.querySelector('input[name="mapchart_button"]:checked');
-		
+
 		const selectedRegion = regionSelect ? regionSelect.value : 'world';
 		const selectedYear = yearRadio ? yearRadio.value : '2021';
 
-		fetch(`/get_total_case?location=${selectedRegion}&year=${selectedYear}`)
+		fetch(`${apis.mapApi}?location=${selectedRegion}&year=${selectedYear}`)
 			.then(response => response.json())
 			.then(caseData => {
 				if (worldChart) {
@@ -228,7 +221,7 @@
 									.replace(/\s+and\s+/g, ' and ')
 									.replace(/\s*\([^)]*\)/g, '')
 									.trim();
-								
+
 								const mappings = {
 									'united states of america': 'united states',
 									'czech republic': 'czechia',
@@ -253,7 +246,7 @@
 
 								const normalizedName = mappings[countryName] || countryName;
 								const value = caseData[normalizedName] || 0;
-								
+
 								return {
 									feature: d,
 									value: value
@@ -271,7 +264,7 @@
 							},
 							tooltip: {
 								callbacks: {
-									label: function(context) {
+									label: function (context) {
 										const countryName = context.raw.feature.properties.name;
 										const cases = context.raw.value;
 										return `${countryName}: ${cases.toLocaleString()} cases`;
@@ -293,9 +286,9 @@
 									width: 100,
 								},
 								ticks: {
-									callback: function(val) {
-										return val >= 1000000 ? 
-											(val / 1000000).toLocaleString() + 'M' : 
+									callback: function (val) {
+										return val >= 1000000 ?
+											(val / 1000000).toLocaleString() + 'M' :
 											val.toLocaleString();
 									}
 								}
@@ -309,29 +302,180 @@
 			.catch(error => console.error('Error fetching data:', error));
 	}
 
-	function addEventListeners() {
-
+	function updateAreaChart() {
+		const apis = getCurrentAPIs();
 		const regionSelect = document.getElementById('region-select');
-		if (regionSelect) regionSelect.addEventListener('change', updateMapChart);
-		
-		const yearRadios = document.querySelectorAll('input[name="mapchart_button"]');
+		const yearRadio = document.querySelector('input[name="mapchart_button"]:checked');
 
-		yearRadios.forEach(radio => {
-			radio.addEventListener('click', function() {
-				updateMapChart();
+		const selectedRegion = regionSelect ? regionSelect.value : 'world';
+		const selectedYear = yearRadio ? yearRadio.value : '2021';
+
+		console.log(`Fetching data for region: ${selectedRegion}, year: ${selectedYear}`);
+
+		fetch(`${apis.caseApi}?location=${selectedRegion}&year=${selectedYear}`)
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('Network response was not ok');
+				}
+				return response.json();
+			})
+			.then(rawData => {
+				console.log('Raw data received:', rawData);
+
+				const processedData = {
+					dates: [],
+					cases: []
+				};
+
+				rawData.forEach(item => {
+					if (item.date) {
+						const date = new Date(item.date);
+						if (date instanceof Date && !isNaN(date)) {
+							const formattedDate = date.toLocaleDateString('en-US', {
+								month: 'short',
+								day: '2-digit',
+								year: 'numeric'
+							});
+
+							const cases = parseFloat(item.total_cases);
+
+							processedData.dates.push(formattedDate);
+							processedData.cases.push(cases);
+						}
+					}
+				});
+
+				console.log('Processed data:', processedData);
+
+				const ctx = document.getElementById('covidChart');
+				if (!ctx) {
+					throw new Error('Canvas element not found');
+				}
+
+				if (window.covidAreaChart) {
+					window.covidAreaChart.destroy();
+				}
+
+				window.covidAreaChart = new Chart(ctx, {
+					type: 'line',
+					data: {
+						labels: processedData.dates.length > 0 ? processedData.dates : ['No data'],
+						datasets: [{
+							label: 'COVID-19 Cases',
+							data: processedData.cases.length > 0 ? processedData.cases : [0],
+							backgroundColor: 'rgba(54, 162, 235, 0.5)',
+							borderColor: 'rgba(54, 162, 235, 1)',
+							borderWidth: 2,
+							fill: true,
+							tension: 0.4
+
+						}]
+					},
+					options: {
+						plugins: {
+							legend: {
+								display: true,
+								position: 'top',
+								labels: {
+									font: {
+										size: 12,
+										weight: 'bold'
+									},
+									padding: 15
+								}
+							},
+							tooltip: {
+								backgroundColor: 'rgba(0, 0, 0, 0.8)',
+								titleFont: {
+									size: 13,
+									weight: 'bold'
+								},
+								bodyFont: {
+									size: 12
+								},
+								padding: 12,
+								cornerRadius: 6
+							}
+						},
+						scales: {
+							y: {
+								beginAtZero: true,
+								grid: {
+									color: 'rgba(0, 0, 0, 0.1)',
+									drawBorder: false
+								},
+								ticks: {
+									font: {
+										size: 11,
+										weight: '500'
+									},
+									padding: 8,
+									callback: function (value) {
+										if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+										if (value >= 1000) return (value / 1000).toFixed(1) + 'K';
+										return value;
+									}
+								}
+							},
+							x: {
+								grid: {
+									display: false
+								},
+								ticks: {
+									font: {
+										size: 11,
+										weight: '500'
+									},
+									maxRotation: 45,
+									minRotation: 45,
+									padding: 8
+								}
+							}
+						}
+					}
+				});
+			})
+			.catch(error => {
+				console.error('Error in updateAreaChart:', error);
+				if (window.covidAreaChart) {
+					window.covidAreaChart.destroy();
+				}
 			});
-			
-			radio.addEventListener('change', function() {
-				updateMapChart();
+	}
+
+	function addEventListeners() {
+		const regionSelect = document.getElementById('region-select');
+		if (regionSelect) {
+			regionSelect.addEventListener('change', () => {
+				console.log('Region changed to:', regionSelect.value);
+				updateAllCharts();
+			});
+		}
+
+		const yearRadios = document.querySelectorAll('input[name="mapchart_button"]');
+		yearRadios.forEach(radio => {
+			radio.addEventListener('change', () => {
+				console.log('Year changed to:', radio.value);
+				updateAllCharts();
+			});
+		});
+
+		const tabs = document.querySelectorAll('.tabs .tab');
+		tabs.forEach(tab => {
+			tab.addEventListener('click', (e) => {
+				e.preventDefault();
+				tabs.forEach(t => t.classList.remove('active'));
+				tab.classList.add('active');
+				updateAllCharts();
 			});
 		});
 	}
 
-	document.addEventListener('DOMContentLoaded', function() {
+	document.addEventListener('DOMContentLoaded', function () {
+		console.log('DOM loaded');
 		const defaultYear = document.querySelector('input[name="mapchart_button"][value="2021"]');
 		if (defaultYear) {
 			defaultYear.checked = true;
-			console.log('Set default year to 2021');
 		}
 
 		fetch('https://unpkg.com/world-atlas/countries-50m.json')
@@ -341,8 +485,309 @@
 				console.log('Map data loaded');
 				addEventListeners();
 				updateMapChart();
+				updatePopulationPyramid();
+				updateAreaChart();
+				updateRegionCharts();
 			})
 			.catch(error => console.error('Error loading map data:', error));
 	});
+
+	function updatePopulationPyramid() {
+		const apis = getCurrentAPIs();
+		const regionSelect = document.getElementById('region-select');
+		const yearRadio = document.querySelector('input[name="mapchart_button"]:checked');
+
+		const selectedRegion = regionSelect ? regionSelect.value : 'world';
+		const selectedYear = yearRadio ? yearRadio.value : '2021';
+
+		fetch(`${apis.ageApi}?location=${selectedRegion}&year=${selectedYear}`)
+			.then(response => {
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+				return response.json();
+			})
+			.then(data => {
+				console.log('Raw API response:', data);
+
+				if (!data) {
+					throw new Error('No data received from API');
+				}
+
+				if (!data.age_groups) {
+					throw new Error('No age_groups data in response');
+				}
+
+				if (typeof data.age_groups !== 'object' || data.age_groups === null) {
+					throw new Error('age_groups is not a valid object');
+				}
+
+				const ageGroups = Object.keys(data.age_groups);
+				if (ageGroups.length === 0) {
+					throw new Error('age_groups is empty');
+				}
+
+				for (const age of ageGroups) {
+					if (!data.age_groups[age] ||
+						typeof data.age_groups[age].male === 'undefined' ||
+						typeof data.age_groups[age].female === 'undefined') {
+						throw new Error(`Invalid data structure for age group: ${age}`);
+					}
+				}
+
+				const canvas = document.getElementById('populationPyramid');
+				if (!canvas) {
+					throw new Error('Canvas element not found');
+				}
+
+				const ctx = canvas.getContext('2d');
+
+				const sortedAgeGroups = ageGroups.reverse();
+
+				const malePopulation = sortedAgeGroups.map(age => -data.age_groups[age].male);
+				const femalePopulation = sortedAgeGroups.map(age => data.age_groups[age].female);
+
+				if (window.populationPyramidChart) {
+					window.populationPyramidChart.destroy();
+				}
+
+				window.populationPyramidChart = new Chart(ctx, {
+					type: 'bar',
+					data: {
+						labels: sortedAgeGroups,
+						datasets: [
+							{
+								label: 'Nam',
+								data: malePopulation,
+								backgroundColor: 'rgba(54, 162, 235, 0.7)',
+								borderColor: 'rgba(54, 162, 235, 1)',
+								borderWidth: 1
+							},
+							{
+								label: 'Nữ',
+								data: femalePopulation,
+								backgroundColor: 'rgba(255, 206, 86, 0.7)',
+								borderColor: 'rgba(255, 206, 86, 1)',
+								borderWidth: 1
+							}
+						]
+					},
+					options: {
+						indexAxis: 'y',
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: {
+								position: 'top',
+								labels: {
+									font: {
+										size: 12,
+										weight: 'bold'
+									},
+									padding: 15
+								}
+							},
+							tooltip: {
+								backgroundColor: 'rgba(0, 0, 0, 0.8)',
+								titleFont: {
+									size: 13
+								},
+								bodyFont: {
+									size: 12
+								},
+								padding: 12,
+								cornerRadius: 6
+							}
+						},
+						scales: {
+							x: {
+								stacked: true,
+								grid: {
+									color: 'rgba(0, 0, 0, 0.1)',
+									drawBorder: false
+								},
+								ticks: {
+									font: {
+										size: 11,
+										weight: '500'
+									},
+									callback: function (value) {
+										return Math.abs(value).toLocaleString();
+									}
+								}
+							},
+							y: {
+								stacked: true,
+								grid: {
+									display: false
+								},
+								ticks: {
+									font: {
+										size: 11,
+										weight: '500'
+									}
+								}
+							}
+						}
+					}
+				});
+			})
+			.catch(error => {
+				console.error('Error in updatePopulationPyramid:', error);
+				console.log('Selected Region:', selectedRegion);
+				console.log('Selected Year:', selectedYear);
+			});
+	}
+
+	function updateRegionCharts() {
+		const apis = getCurrentAPIs();
+		console.log('Updating region charts...');
+		fetch(apis.continentApi)
+			.then(response => response.json())
+			.then(data => {
+				const regions = {
+					'africa': { canvasId: 'africaChart', displayName: 'Africa' },
+					'asia': { canvasId: 'asiaChart', displayName: 'asia' },
+					'europe': { canvasId: 'europeChart', displayName: 'Europe' },
+					'northamerica': { canvasId: 'northamericaChart', displayName: 'northamerica' },
+					'southamerica': { canvasId: 'southamericaChart', displayName: 'southamerica' },
+					'oceania': { canvasId: 'oceaniaChart', displayName: 'oceania' }
+				};
+
+				Object.entries(regions).forEach(([region, config]) => {
+					const regionData = data[region];
+					if (regionData) {
+						const canvas = document.getElementById(config.canvasId);
+						if (!canvas) return;
+
+						const dates = regionData.map(item => item.date);
+						const cases = regionData.map(item => item.total_cases);
+
+						if (window[config.canvasId] && window[config.canvasId] instanceof Chart) {
+							window[config.canvasId].destroy();
+						}
+
+						window[config.canvasId] = new Chart(canvas, {
+							type: 'line',
+							data: {
+								labels: dates,
+								datasets: [{
+									label: config.displayName,
+									data: cases,
+									fill: true,
+									borderColor: getRegionColor(region),
+									backgroundColor: getRegionBackgroundColor(region),
+									borderWidth: 2,
+									pointRadius: 0,
+									tension: 0.4
+								}]
+							},
+							options: {
+								responsive: true,
+								maintainAspectRatio: false,
+								plugins: {
+									legend: {
+										display: false
+									},
+									tooltip: {
+										backgroundColor: 'rgba(0, 0, 0, 0.8)',
+										titleFont: {
+											size: 13
+										},
+										bodyFont: {
+											size: 12
+										},
+										padding: 12,
+										cornerRadius: 6
+									}
+								},
+								scales: {
+									x: {
+										grid: {
+											display: false
+										},
+										ticks: {
+											font: {
+												size: 10,
+												weight: '500'
+											},
+											maxRotation: 45,
+											minRotation: 45,
+											maxTicksLimit: 8
+										}
+									},
+									y: {
+										beginAtZero: true,
+										grid: {
+											color: 'rgba(0, 0, 0, 0.1)',
+											drawBorder: false
+										},
+										ticks: {
+											font: {
+												size: 10,
+												weight: '500'
+											},
+											callback: function (value) {
+												if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+												if (value >= 1000) return (value / 1000).toFixed(1) + 'K';
+												return value;
+											}
+										}
+									}
+								},
+								interaction: { intersect: false, mode: 'index' }
+							}
+						});
+
+						const totalCases = cases.reduce((a, b) => a + b, 0);
+						const numberDiv = canvas.parentElement.querySelector('.number_region');
+						if (numberDiv) numberDiv.textContent = totalCases.toLocaleString();
+					}
+				});
+			})
+			.catch(error => console.error('Error updating region charts:', error));
+	}
+
+	function getRegionColor(region) {
+		const colors = {
+			'africa': '#E95420',
+			'asia': '#FF5722',
+			'europe': '#0078D7',
+			'southamerica': '#F1C40F',
+			'northamerica': '#2ECC71',
+			'oceania': '#A569BD'
+		};
+		return colors[region] || '#000000';
+	}
+
+	function getRegionBackgroundColor(region) {
+		const color = getRegionColor(region);
+		return color.replace(')', ', 0.2)').replace('rgb', 'rgba');
+	}
+
+	function getCurrentAPIs() {
+		const activeTab = document.querySelector('.tabs .tab.active');
+		return {
+			mapApi: activeTab.dataset.api,
+			caseApi: activeTab.dataset.caseApi,
+			ageApi: activeTab.dataset.ageApi,
+			continentApi: activeTab.dataset.continentApi
+		};
+	}
+
+	function updateAllCharts() {
+		const apis = getCurrentAPIs();
+		console.log('Current APIs:', apis);
+
+		updateMapChart();
+		updateAreaChart();
+		updatePopulationPyramid();
+		updateRegionCharts();
+	}
+
+	// Gọi hàm để vẽ biểu đồ khi trang đã tải xong
+	window.onload = updateRegionCharts;
+
 </script>
+
 </html>

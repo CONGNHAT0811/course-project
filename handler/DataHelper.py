@@ -52,13 +52,13 @@ class DataHelper:
                "Norway", "Poland", "Portugal", "Romania", "Russia", "San Marino", "Serbia", "Slovakia", 
                "Slovenia", "Spain", "Sweden", "Switzerland", "Ukraine", "United Kingdom", "Vatican"
             ],
-            "north america": [
+            "northamerica": [
                 "Antigua and Barbuda", "Bahamas", "Barbados", "Belize", "Canada", "Costa Rica", "Cuba", 
                 "Dominica", "Dominican Republic", "El Salvador", "Grenada", "Guatemala", "Haiti", "Honduras", 
                 "Jamaica", "Mexico", "Nicaragua", "Panama", "Saint Kitts and Nevis", "Saint Lucia", 
                 "Saint Vincent and the Grenadines", "Trinidad and Tobago", "United States"
             ],
-            "south america": [
+            "southamerica": [
                 "Argentina", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador", "Guyana", "Paraguay", 
                 "Peru", "Suriname", "Uruguay", "Venezuela"
             ],
@@ -68,6 +68,10 @@ class DataHelper:
             ]
         }
         return continents
+
+    def get_countries_in_continent(self, continent):
+        continent = continent.lower().strip()
+        return self.local_continents.get(continent, [])
 
  
 
