@@ -13,10 +13,8 @@ from handler.functions.get_deaths_age_sex import fn_get_deaths_age_sex
 from handler.functions.get_deaths import fn_get_deaths
 from handler.functions.get_deaths import fn_get_total_deaths_year, fn_get_deaths_continent, fn_get_total_deaths
 
-from handler.functions.get_new_vaccin import fn_get_new_vaccin, fn_get_total_new_vaccin
-from handler.functions.get_new_vaccin import fn_get_total_new_vaccin
+from handler.functions.get_new_vaccin import fn_get_new_vaccin, fn_get_total_new_vaccin,fn_get_total_new_vaccin_continent
 from handler.functions.get_vaccin_age_sex import fn_get_vaccin_age_sex
-from handler.functions.get_vaccin_age_sex import fn_get_total_vaccin_age_sex
 
 
 app = Flask(__name__)
@@ -170,37 +168,90 @@ def get_deaths_age_sex():
 
 
     
-#Hàm lấy ra giá trị New_vaccin        
+#Dùng để vẽ mapchart và table của Vaccin     
 @app.route("/get_new_vaccin", methods=["GET"])
 def get_new_vaccin():
-    
     location = request.args.get('location', "").lower()
+    year = request.args.get('year', "total")  # Thêm mặc định "total" cho year nếu không truyền vào
+
+    valid_years = [2020, 2021, 2022, 2023, 2024, "total"]
+
+    # Kiểm tra xem year có hợp lệ không
+    if year not in valid_years:
+        return jsonify({"error": f"Invalid year: {year}"}), 400
 
     try:
         data_helper = DataHelper(
             os.path.join(os.getcwd(), "handler", "data", "vacccin_full_location", "vaccinations.csv")
         )
-        result = fn_get_new_vaccin(location, data_helper)
-        return jsonify(result), 200  
-    
+        result = fn_get_new_vaccin(location, data_helper, year)  # Truyền đúng tham số year
+        return jsonify(result), 200
+
     except ValueError as e:
-        return jsonify({"error": str(e)}), 404  
+        return jsonify({"error": str(e)}), 404
 
     except Exception as e:
-        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500   
-    
+        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+
+#Dùng để vẽ area chart    
+@app.route("/get_total_new_vaccin", methods=["GET"])
+def get_total_new_vaccin():
+    location = request.args.get('location', "").lower()
+    year = request.args.get('year', "total")  
+
+    valid_years = [2020, 2021, 2022, 2023, 2024, "total"]
+
+    if year not in valid_years:
+        return jsonify({"error": f"Invalid year: {year}"}), 400
+
+    try:
+        data_helper = DataHelper(
+            os.path.join(os.getcwd(), "handler", "data", "vacccin_full_location", "vaccinations.csv")
+        )
+        result = fn_get_total_new_vaccin(location, data_helper, year)  # Truyền đúng tham số year
+        return jsonify(result), 200
+
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+
+    except Exception as e:
+        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+
+#Dùng để vẽ region chart 
+@app.route("/get_total_new_vaccin_continent", methods=["GET"])
+def get_total_new_vaccin_continent():
+    # Default values for location and year
+    location = request.args.get('location', "world").lower()  # Default to "world"
+    year = request.args.get('year', "total")  # Default to "total"
+
+    valid_years = [2020, 2021, 2022, 2023, 2024, "total"]
+
+    try:
+        data_helper = DataHelper(
+            os.path.join(os.getcwd(), "handler", "data", "vacccin_full_location", "vaccinations.csv")
+        )
+        result = fn_get_total_new_vaccin_continent(location, data_helper, year)
+        return jsonify(result), 200
+
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+
+    except Exception as e:
+        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+
     
 #Ham lấy ra giá trị Vaccin theo tuoi và giới tính    
 @app.route("/get_vaccin_age_sex", methods=["GET"])
 def get_vaccin_age_sex():
     
     location = request.args.get('location', "").lower()
-
+    year = request.args.get('year')
+    valid_years = [2020, 2021, 2022, 2023, 2024,"total"]
     try:
         data_helper = DataHelper(
             os.path.join(os.getcwd(), "handler", "data", "vacccin_full_location", "vaccinations-by-age-group.csv")
         )
-        result = fn_get_vaccin_age_sex(location, data_helper)
+        result = fn_get_vaccin_age_sex(location, data_helper,year)
         return jsonify(result), 200  
     
     except ValueError as e:
@@ -211,40 +262,6 @@ def get_vaccin_age_sex():
 
     
     
-@app.route("/get_total_new_vaccin", methods=["GET"])
-def get_total_new_vaccin():
-    
-    location = request.args.get('location', "").lower()
 
-    try:
-        data_helper = DataHelper(
-            os.path.join(os.getcwd(), "handler", "data", "vacccin_full_location", "vaccinations.csv")
-        )
-        result = fn_get_total_new_vaccin(location, data_helper)
-        return jsonify(result), 200 
-    
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 404  
 
-    except Exception as e:
-        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500      
-          
-@app.route("/get_total_vaccin_age_sex", methods=["GET"])
-def get_total_vaccin_age_sex():
-    
-    location = request.args.get('location', "").lower()
-
-    try:
-        data_helper = DataHelper(
-            os.path.join(os.getcwd(), "handler", "data", "vacccin_full_location", "vaccinations-by-age-group.csv")
-        )
-        result = fn_get_total_vaccin_age_sex(location, data_helper)
-        return jsonify(result), 200  
-    
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 404  
-
-    except Exception as e:
-        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500      
-                    
 app.run(debug=True)
