@@ -33,8 +33,8 @@ import os
 @app.route("/get_case", methods=["GET"])
 def get_case():
     location = request.args.get('location', "").lower()
-    year = request.args.get('year', type=int)
-    valid_years = [2020, 2021, 2022, 2023, 2024,]
+    year = request.args.get('year')
+    valid_years = [2020, 2021, 2022, 2023, 2024,"total"]
     try:
         data_helper = DataHelper(os.path.join(os.getcwd(), "handler", "data", "case", "new_cases.csv"))
         result = fn_get_case(location, data_helper, year)
@@ -42,13 +42,15 @@ def get_case():
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
-#Dùng để vẽ Region chart   
+#Dùng để vẽ Region chart để mặc đinh là total  
 @app.route("/get_case_continent", methods=["GET"])
 def get_case_continent():
     location = request.args.get('location', "world").lower()
+    year = request.args.get('year')
+    valid_years = [2020, 2021, 2022, 2023, 2024,"total"]
     try:
         data_helper = DataHelper(os.path.join(os.getcwd(), "handler", "data", "case", "new_cases.csv"))
-        result = fn_get_case_continent(location, data_helper)
+        result = fn_get_case_continent(location, data_helper,year)
         
         return jsonify(result)
     except ValueError as e:
@@ -80,8 +82,8 @@ def get_total_case():
 @app.route("/get_case_age_sex", methods=["GET"])
 def get_case_age_sex():
     location = request.args.get('location', "").lower()
-    year = request.args.get('year', type=int)
-    valid_years = [2020, 2021, 2022, 2023, 2024]
+    year = request.args.get('year')
+    valid_years = [2020, 2021, 2022, 2023, 2024, "total"]
 
     try:
         data_helper = DataHelper(
@@ -100,7 +102,7 @@ def get_case_age_sex():
 def get_deaths():
     location = request.args.get('location', "").lower()
     year = request.args.get('year', type=int)
-    valid_years = [2020, 2021, 2022, 2023, 2024,]
+    valid_years = [2020, 2021, 2022, 2023, 2024,"total"]
 
     try:
         data_helper = DataHelper(os.path.join(os.getcwd(), "handler", "data", "deaths", "new_deaths.csv"))
@@ -115,9 +117,11 @@ def get_deaths():
 @app.route("/get_deaths_continent", methods=["GET"])
 def get_deaths_continent():
     location = request.args.get('location', "world").lower()
+    year = request.args.get('year', type=int)
+    valid_years = [2020, 2021, 2022, 2023, 2024,"total"]
     try:
         data_helper = DataHelper(os.path.join(os.getcwd(), "handler", "data", "deaths", "new_deaths.csv"))
-        result = fn_get_deaths_continent(location, data_helper)
+        result = fn_get_deaths_continent(location, data_helper,year)
         
         return jsonify(result)
     except ValueError as e:
@@ -148,12 +152,14 @@ def get_total_deaths():
 @app.route("/get_deaths_age_sex", methods=["GET"])
 def get_deaths_age_sex():
     location = request.args.get('location', "").lower()
+    year = request.args.get('year')
+    valid_years = [2020, 2021, 2022, 2023, 2024,"total"]
 
     try:
         data_helper = DataHelper(
             os.path.join(os.getcwd(), "handler", "data", "deaths", "deaths_age_sex.csv")
         )
-        result = fn_get_deaths_age_sex(location, data_helper)
+        result = fn_get_deaths_age_sex(location, data_helper,year)
         return jsonify(result), 200 
     
     except ValueError as e:
